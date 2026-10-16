@@ -1,22 +1,17 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI; 
 using System.Collections.Generic;
 
 public class MarkdownRenderer : MonoBehaviour
 {
-    [SerializeField] private TMP_Text target;
     [SerializeField] private Color codeColor = new(0.65f, 0.85f, 0.65f);
     [SerializeField] private Color quoteColor = new(0.65f, 0.65f, 0.65f);
     [SerializeField] private Color inlineCodeColor = new(0.9f, 0.7f, 0.5f);
 
-    // ===== 布局节流 =====
-    [SerializeField] private float layoutInterval = 0.08f;
-    private float lastLayoutTime;
-    private RectTransform contentRect;
-
+    private TMP_Text target;
 
     private readonly StringBuilder buffer = new();
     private readonly StringBuilder result = new();
@@ -25,19 +20,21 @@ public class MarkdownRenderer : MonoBehaviour
     private bool dirty;
     public static MarkdownRenderer Instance;
 
+    /// <summary>每次真正重渲染完成后触发，布局刷新由外部（ChatUI）负责</summary>
+    public event Action OnRendered;
+
     private void Awake()
     {
         Instance = this;
-        // 自动找到 Content（Text 的父级）
-        contentRect = target.transform.parent as RectTransform;
     }
 
-    public void Init()
+    public void Init(TMP_Text target)
     {
+        this.target = target;
         buffer.Clear(); result.Clear();
         inlineCodeMap.Clear(); inlineCodeCounter = 0;
-        target.text = ""; dirty = false;
-        lastLayoutTime = 0;
+        if (target != null) target.text = "";
+        dirty = false;
     }
 
     public void Append(string content)
@@ -53,13 +50,12 @@ public class MarkdownRenderer : MonoBehaviour
         buffer.Clear(); buffer.Append(content);
         inlineCodeMap.Clear(); inlineCodeCounter = 0;
         dirty = true;
-        Render(forceLayout: true);   // 最终一次强制刷新
+        Render();
     }
 
-    //forceLayout 参数
-    private void Render(bool forceLayout = false)
+    private void Render()
     {
-        if (!dirty) return;
+        if (!dirty || target == null) return;
         result.Clear();
         inlineCodeMap.Clear();
         inlineCodeCounter = 0;
@@ -92,17 +88,8 @@ public class MarkdownRenderer : MonoBehaviour
         target.text = result.ToString();
         dirty = false;
 
-        // ===== 节流布局刷新 =====
-        if (forceLayout || Time.unscaledTime - lastLayoutTime >= layoutInterval)
-        {
-            lastLayoutTime = Time.unscaledTime;
-            if (contentRect != null)
-            {
-                LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
-            }
-        }
+        OnRendered?.Invoke();
     }
-
 
     /// <summary>
     /// ：TMP 格式兜底清洗器
