@@ -11,6 +11,9 @@ public class MarkdownRenderer : MonoBehaviour
     [SerializeField] private Color quoteColor = new(0.65f, 0.65f, 0.65f);
     [SerializeField] private Color inlineCodeColor = new(0.9f, 0.7f, 0.5f);
 
+    [Header("渲染节流")]
+    [SerializeField] private float renderInterval = 0.06f;
+
     private TMP_Text target;
 
     private readonly StringBuilder buffer = new();
@@ -18,6 +21,7 @@ public class MarkdownRenderer : MonoBehaviour
     private readonly Dictionary<string, string> inlineCodeMap = new();
     private int inlineCodeCounter = 0;
     private bool dirty;
+    private float lastRenderTime;
     public static MarkdownRenderer Instance;
 
     /// <summary>每次真正重渲染完成后触发，布局刷新由外部（ChatUI）负责</summary>
@@ -35,6 +39,7 @@ public class MarkdownRenderer : MonoBehaviour
         inlineCodeMap.Clear(); inlineCodeCounter = 0;
         if (target != null) target.text = "";
         dirty = false;
+        lastRenderTime = 0;
     }
 
     public void Append(string content)
@@ -42,7 +47,6 @@ public class MarkdownRenderer : MonoBehaviour
         if (string.IsNullOrEmpty(content)) return;
         buffer.Append(content);
         dirty = true;
-        Render();
     }
 
     public void SetContent(string content)
@@ -50,12 +54,24 @@ public class MarkdownRenderer : MonoBehaviour
         buffer.Clear(); buffer.Append(content);
         inlineCodeMap.Clear(); inlineCodeCounter = 0;
         dirty = true;
-        Render();
+        RenderNow();
+    }
+
+    private void Update()
+    {
+        if (dirty && Time.unscaledTime - lastRenderTime >= renderInterval)
+            Render();
+    }
+
+    public void RenderNow()
+    {
+        if (dirty) Render();
     }
 
     private void Render()
     {
         if (!dirty || target == null) return;
+        lastRenderTime = Time.unscaledTime;
         result.Clear();
         inlineCodeMap.Clear();
         inlineCodeCounter = 0;
@@ -97,28 +113,16 @@ public class MarkdownRenderer : MonoBehaviour
     /// </summary>
     private string SanitizeForTMP(string text)
     {
-        // 1. 强制移除行首的无序列表符号 (-, *, +) 及其后的空格，防止渲染出圆点
-        // 兼容行首有空格缩进的情况
         text = Regex.Replace(text, @"^[ \t]*[-*+][ \t]+", "", RegexOptions.Multiline);
-
-        // 2. 将引用符号 > 替换为安全的中文前缀，防止渲染异常
         text = Regex.Replace(text, @"^[ \t]*>[ \t]+", "【注】", RegexOptions.Multiline);
-
-        // 3. 清理 AI 可能生成的代码块标记 ```
         text = Regex.Replace(text, @"```[a-zA-Z]*\n?", "", RegexOptions.Multiline);
-
-        // 4. 清理过多的连续换行（TMP 对连续换行非常敏感，会导致巨大空白）
         text = Regex.Replace(text, @"\n{3,}", "\n\n");
-
-        // 5. 将 Tab 缩进替换为普通空格（TMP 对 Tab 支持极差）
         text = text.Replace("\t", "    ");
-
         return text;
     }
 
     private bool TryRenderBlock(string line, string trimmed)
     {
-        // 标题处理
         int headingLevel = 0;
         while (headingLevel < trimmed.Length && headingLevel < 6 && trimmed[headingLevel] == '#')
             headingLevel++;
@@ -131,14 +135,12 @@ public class MarkdownRenderer : MonoBehaviour
             return true;
         }
 
-        // 水平线
         if (Regex.IsMatch(trimmed, @"^([-*_])\1{2,}\s*$"))
         {
             result.Append("<color=#FFFFFF>──────────────────────────</color>\n");
             return true;
         }
 
-        // 有序列表 (1. 2. 3.)
         Match orderedMatch = Regex.Match(line, @"^(\s*)(\d+)\.\s+(.+)$");
         if (orderedMatch.Success)
         {
@@ -156,7 +158,6 @@ public class MarkdownRenderer : MonoBehaviour
     {
         text = Escape(text);
 
-        // 提取行内代码
         text = Regex.Replace(text, @"`([^`\n]+)`", match =>
         {
             string code = match.Groups[1].Value;
