@@ -14,6 +14,7 @@ public class AIClient : MonoBehaviour
     [Tooltip("StreamingAssets 下的配置文件名")]
     [SerializeField] private string configFileName = "AIConfig.json";
 
+    public static string currentExperimentName;
     private string analyzeUrl;
     private string chatUrl;
     private string experimentQAUrl;
@@ -31,6 +32,7 @@ public class AIClient : MonoBehaviour
     private class AIConfig
     {
         public string aiUrl;
+        public string currentExperimentName;
     }
 
     [Serializable]
@@ -110,9 +112,12 @@ public class AIClient : MonoBehaviour
                 return;
             }
 
+            currentExperimentName = config.currentExperimentName;
+
+
             // 去掉末尾多余的 /
             string baseUrl = config.aiUrl.TrimEnd('/');
-
+            
             analyzeUrl = $"{baseUrl}/analyze";
             chatUrl = $"{baseUrl}/chat";
             experimentQAUrl = $"{baseUrl}/knowledgeDBChat";

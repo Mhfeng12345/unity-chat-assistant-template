@@ -15,14 +15,11 @@ public class ChatUI : MonoBehaviour
     [SerializeField] private string currentExperiment;
     [SerializeField] private string experimentQAStr;
 
-    [Header("布局")]
-    [SerializeField] private float layoutInterval = 0.08f;
-    private float lastLayoutTime;
     private RectTransform contentRect;
 
     private void Awake()
     {
-        contentRect = answerText.transform.parent as RectTransform;
+        contentRect =  answerText.transform.parent as RectTransform;
     }
 
     private void Start()
@@ -32,22 +29,24 @@ public class ChatUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (MarkdownRenderer.Instance != null)
-            MarkdownRenderer.Instance.OnRendered -= HandleRendered;
+        MarkdownRenderer.Instance.OnRendered -= HandleRendered;
     }
 
     private void HandleRendered()
     {
-        if (Time.unscaledTime - lastLayoutTime < layoutInterval) return;
-        lastLayoutTime = Time.unscaledTime;
-        LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+        RebuildLayout();
     }
 
+    private void RebuildLayout()
+    {
+        LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+    }
 
     private void FinishLayout()
     {
         Debug.Log("回答完成");
-        LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+        MarkdownRenderer.Instance.RenderNow();
+        RebuildLayout();
     }
 
     [ContextMenu("Excute Chat")]
