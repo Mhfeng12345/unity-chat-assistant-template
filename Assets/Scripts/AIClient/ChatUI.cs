@@ -76,7 +76,6 @@ public class ChatUI : MonoBehaviour
     {
         MarkdownRenderer.Instance.Init(answerText);
         AIClient.Instance.SendExperimentQA(
-            currentExperiment,
             experimentQAStr,
             chunk => MarkdownRenderer.Instance.Append(chunk),
             FinishLayout
