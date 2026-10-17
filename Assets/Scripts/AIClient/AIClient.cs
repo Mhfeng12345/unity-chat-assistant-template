@@ -14,7 +14,7 @@ public class AIClient : MonoBehaviour
     [Tooltip("StreamingAssets 下的配置文件名")]
     [SerializeField] private string configFileName = "AIConfig.json";
 
-    public static string currentExperimentName;
+    public  string currentExperimentName;
     private string analyzeUrl;
     private string chatUrl;
     private string experimentQAUrl;
@@ -174,13 +174,13 @@ public class AIClient : MonoBehaviour
     /// <summary>
     /// 实验知识问答：指定实验名称，检索知识库后流式回答
     /// </summary>
-    public void SendExperimentQA(string experimentName, string question, Action<string> chunkCallback, Action completeCallback = null)
+    public void SendExperimentQA(string question, Action<string> chunkCallback, Action completeCallback = null)
     {
-        if (string.IsNullOrWhiteSpace(experimentName) || string.IsNullOrWhiteSpace(question))
+        if (string.IsNullOrWhiteSpace(question))
         {
             Debug.LogError("experimentName 或 question 为空");
             completeCallback?.Invoke();
-            return;
+            return; 
         }
 
         if (string.IsNullOrEmpty(experimentQAUrl))
@@ -192,7 +192,7 @@ public class AIClient : MonoBehaviour
 
         var body = new ExperimentQARequestBody
         {
-            experiment_name = experimentName,
+            experiment_name = currentExperimentName,
             question = question
         };
 
