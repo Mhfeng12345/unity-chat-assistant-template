@@ -8,13 +8,20 @@ using UnityEngine.UI;
 public class AIKnowledgeDBChatPanel : MonoBehaviour
 {
     [SerializeField] TMP_InputField userInput;
-    [SerializeField] Button sendBtn;
+    [SerializeField] Button sendBtn,clearBtn;
     [SerializeField] RectTransform content;
     [SerializeField] GameObject questionItemPrefab, answerItemPrefab;
     private void Start()
     {
         sendBtn.onClick.AddListener(() =>OnInputSubmit(userInput.text));
         userInput.onSubmit.AddListener(OnInputSubmit);
+        clearBtn.onClick.AddListener(()=>
+        {
+            for (int i = content.childCount - 1; i >= 0 ; i--)
+            {
+                Destroy(content.GetChild(i).gameObject);
+            }
+        });
     }
 
     private void OnInputSubmit(string text)

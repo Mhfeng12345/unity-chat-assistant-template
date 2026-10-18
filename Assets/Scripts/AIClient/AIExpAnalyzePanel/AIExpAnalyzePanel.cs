@@ -30,6 +30,6 @@ public class AIExpAnalyzePanel : MonoBehaviour
     void CompetedAIAswer()
     {
         LayoutRebuilder.ForceRebuildLayoutImmediate(answerText.transform.parent as RectTransform);
-        sendBtn.interactable = false;
+        sendBtn.interactable = true;
     }
 }
