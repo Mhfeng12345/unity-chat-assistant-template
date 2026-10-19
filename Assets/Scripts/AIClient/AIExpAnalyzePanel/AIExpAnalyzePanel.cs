@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,29 +5,58 @@ using UnityEngine.UI;
 public class AIExpAnalyzePanel : MonoBehaviour
 {
     [SerializeField] Button sendBtn;
+    [SerializeField] Image statusImage;
+    [SerializeField] Sprite idleSprite, stopSprite;
     [SerializeField] TextMeshProUGUI answerText;
-    [Header("ÊµÑé·ÖÎö£¨¿ÉÑ¡£¬Inspector µ÷ÊÔÓÃ£©")]
+
+    [Header("å®žéªŒæ•°æ®ï¼ˆå¯åœ¨ Inspector ä¸­é…ç½®ï¼‰")]
     [TextArea(5, 15)]
     public string experimentDataJson;
-    void Start()
+
+    private bool isMine;
+
+    private void Start()
     {
-        sendBtn.onClick.AddListener(SendAIAnalyze);
+        sendBtn.onClick.AddListener(OnSendBtnClick);
+        statusImage.color = Color.white;
+
+        RefreshSendBtn();
+    }
+
+    private void OnSendBtnClick()
+    {
+        if (isMine && AIClient.Instance.IsBusy)
+        {
+            AIClient.Instance.StopStream();
+            isMine = false;
+            RefreshSendBtn();
+            return;
+        }
+
+        SendAIAnalyze();
     }
 
     public void SendAIAnalyze()
     {
-        sendBtn.interactable = false;
-        MarkdownRenderer.Instance.Init(answerText);
+        isMine = true;
+        RefreshSendBtn();
+
         AIClient.Instance.SendAnalyze(
             experimentDataJson,
             chunk => MarkdownRenderer.Instance.Append(chunk),
-            ()=>CompetedAIAswer()
-        );
+            () =>
+            {
+                isMine = false;
+                MarkdownRenderer.Instance.RenderNow();
+                LayoutRebuilder.ForceRebuildLayoutImmediate(answerText.transform.parent as RectTransform);
+                RefreshSendBtn();
+            },
+            () => MarkdownRenderer.Instance.Init(answerText));
     }
 
-    void CompetedAIAswer()
+    private void RefreshSendBtn()
     {
-        LayoutRebuilder.ForceRebuildLayoutImmediate(answerText.transform.parent as RectTransform);
-        sendBtn.interactable = true;
+        bool showStop = isMine && AIClient.Instance.IsBusy;
+        statusImage.sprite = showStop ? stopSprite : idleSprite;
     }
 }
