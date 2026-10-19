@@ -10,14 +10,17 @@ public class AIClient : MonoBehaviour
 {
     public static AIClient Instance;
 
-    [Header("ÅäÖÃ")]
-    [Tooltip("StreamingAssets ÏÂµÄÅäÖÃÎÄ¼şÃû")]
+    [Header("é…ç½®")]
+    [Tooltip("StreamingAssets ä¸‹çš„é…ç½®æ–‡ä»¶å")]
     [SerializeField] private string configFileName = "AIConfig.json";
 
-    public  string currentExperimentName;
+    public string currentExperimentName;
     private string analyzeUrl;
     private string chatUrl;
     private string experimentQAUrl;
+
+    /// <summary>å½“å‰æ˜¯å¦æœ‰è¯·æ±‚æ­£åœ¨è¿›è¡Œ</summary>
+    public bool IsBusy { get; private set; }
 
     private readonly ConcurrentQueue<byte[]> chunks = new();
     private readonly Decoder decoder = Encoding.UTF8.GetDecoder();
@@ -27,6 +30,11 @@ public class AIClient : MonoBehaviour
 
     private Action<string> onChunk;
     private Action onComplete;
+
+    private UnityWebRequest activeRequest;
+    private Action pendingRequest;
+    private bool stopped;
+    private bool completed;
 
     [Serializable]
     private class AIConfig
@@ -82,7 +90,7 @@ public class AIClient : MonoBehaviour
 
         if (request.result != UnityWebRequest.Result.Success)
         {
-            Debug.LogError($"¼ÓÔØÅäÖÃÊ§°Ü: {request.error}\nÂ·¾¶: {path}");
+            Debug.LogError($"åŠ è½½é…ç½®å¤±è´¥: {request.error}\nè·¯å¾„: {path}");
             yield break;
         }
 
@@ -90,7 +98,7 @@ public class AIClient : MonoBehaviour
 #else
         if (!File.Exists(path))
         {
-            Debug.LogError($"ÕÒ²»µ½ÅäÖÃÎÄ¼ş: {path}");
+            Debug.LogError($"æ‰¾ä¸åˆ°é…ç½®æ–‡ä»¶: {path}");
             yield break;
         }
 
@@ -108,84 +116,83 @@ public class AIClient : MonoBehaviour
 
             if (string.IsNullOrEmpty(config.aiUrl))
             {
-                Debug.LogError("AIConfig.aiUrl Îª¿Õ");
+                Debug.LogError("AIConfig.aiUrl ä¸ºç©º");
                 return;
             }
 
             currentExperimentName = config.currentExperimentName;
 
-
-            // È¥µôÄ©Î²¶àÓàµÄ /
+            // å»æ‰æœ«å°¾å¤šä½™çš„ /
             string baseUrl = config.aiUrl.TrimEnd('/');
-            
+
             analyzeUrl = $"{baseUrl}/analyze";
             chatUrl = $"{baseUrl}/chat";
             experimentQAUrl = $"{baseUrl}/knowledgeDBChat";
 
-            Debug.Log($"AIConfig ¼ÓÔØ³É¹¦\naiUrl: {baseUrl}\nanalyze: {analyzeUrl}\nchat: {chatUrl}\nexperimentQA: {experimentQAUrl}");
+            Debug.Log($"AIConfig åŠ è½½æˆåŠŸ\naiUrl: {baseUrl}\nanalyze: {analyzeUrl}\nchat: {chatUrl}\nexperimentQA: {experimentQAUrl}");
         }
         catch (Exception e)
         {
-            Debug.LogError($"½âÎö AIConfig Ê§°Ü: {e.Message}");
+            Debug.LogError($"è§£æ AIConfig å¤±è´¥: {e.Message}");
         }
     }
 
-    #region ¹«¹²½Ó¿Ú
+    #region å¯¹å¤–æ¥å£
 
     /// <summary>
-    /// ÊµÑé·ÖÎö£ºÖ±½Ó´«Èë JSON ×Ö·û´®
+    /// å®éªŒåˆ†æï¼šç›´æ¥ä¼ å…¥ JSON å­—ç¬¦ä¸²
     /// </summary>
-    public void SendAnalyze(string json, Action<string> chunkCallback, Action completeCallback = null)
+    public void SendAnalyze(string json, Action<string> chunkCallback, Action completeCallback = null, Action onStart = null)
     {
         if (string.IsNullOrEmpty(json))
         {
-            Debug.LogError("experimentDataJson Îª¿Õ");
+            Debug.LogError("experimentDataJson ä¸ºç©º");
             completeCallback?.Invoke();
             return;
         }
 
         if (string.IsNullOrEmpty(analyzeUrl))
         {
-            Debug.LogError("analyzeUrl Î´ÅäÖÃ£¬Çë¼ì²é StreamingAssets/AIConfig.json");
+            Debug.LogError("analyzeUrl æœªé…ç½®ï¼Œè¯·æ£€æŸ¥ StreamingAssets/AIConfig.json");
             completeCallback?.Invoke();
             return;
         }
 
-        StartCoroutine(SendRequest(analyzeUrl, json, chunkCallback, completeCallback));
+        Enqueue(() => StartCoroutine(SendRequest(analyzeUrl, json, chunkCallback, completeCallback, onStart)));
     }
 
     /// <summary>
-    /// ÆÕÍ¨ÁÄÌì
+    /// æ™®é€šèŠå¤©
     /// </summary>
-    public void SendChat(string message, Action<string> chunkCallback, Action completeCallback = null)
+    public void SendChat(string message, Action<string> chunkCallback, Action completeCallback = null, Action onStart = null)
     {
         if (string.IsNullOrEmpty(chatUrl))
         {
-            Debug.LogError("chatUrl Î´ÅäÖÃ£¬Çë¼ì²é StreamingAssets/AIConfig.json");
+            Debug.LogError("chatUrl æœªé…ç½®ï¼Œè¯·æ£€æŸ¥ StreamingAssets/AIConfig.json");
             completeCallback?.Invoke();
             return;
         }
 
         var body = new ChatRequestBody { message = message };
         string json = JsonUtility.ToJson(body);
-        StartCoroutine(SendRequest(chatUrl, json, chunkCallback, completeCallback));
+        Enqueue(() => StartCoroutine(SendRequest(chatUrl, json, chunkCallback, completeCallback, onStart)));
     }
 
     /// <summary>
-    /// ÊµÑéÖªÊ¶ÎÊ´ğ£ºÖ¸¶¨ÊµÑéÃû³Æ£¬¼ìË÷ÖªÊ¶¿âºóÁ÷Ê½»Ø´ğ
+    /// å®éªŒçŸ¥è¯†é—®ç­”ï¼šæŒ‡å®šå®éªŒåç§°ï¼ŒåŸºäºçŸ¥è¯†åº“å›ç­”
     /// </summary>
-    public void SendExperimentQA(string question, Action<string> chunkCallback, Action completeCallback = null)
+    public void SendExperimentQA(string question, Action<string> chunkCallback, Action completeCallback = null, Action onStart = null)
     {
         if (string.IsNullOrWhiteSpace(question))
         {
-            Debug.LogError("experimentName »ò question Îª¿Õ");
+            Debug.LogError("question ä¸ºç©º");
             completeCallback?.Invoke();
-            return; 
+            return;
         }
 
         if (string.IsNullOrEmpty(experimentQAUrl))
         {
-            Debug.LogError("experimentQAUrl Î´ÅäÖÃ£¬Çë¼ì²é StreamingAssets/AIConfig.json");
+            Debug.LogError("experimentQAUrl æœªé…ç½®ï¼Œè¯·æ£€æŸ¥ StreamingAssets/AIConfig.json");
             completeCallback?.Invoke();
             return;
         }
@@ -196,15 +203,54 @@ public class AIClient : MonoBehaviour
             question = question
         };
 
-        StartCoroutine(SendRequest(experimentQAUrl, JsonUtility.ToJson(body), chunkCallback, completeCallback));
+        Enqueue(() => StartCoroutine(SendRequest(experimentQAUrl, JsonUtility.ToJson(body), chunkCallback, completeCallback, onStart)));
+    }
+
+    /// <summary>
+    /// ç”¨æˆ·ä¸»åŠ¨åœæ­¢ï¼šåŒæ—¶æ¸…ç©ºå¾…å‘è¯·æ±‚
+    /// </summary>
+    public bool StopStream()
+    {
+        pendingRequest = null;
+        return StopInternal();
+    }
+
+    /// <summary>
+    /// åªä¸­æ­¢å½“å‰è¯·æ±‚ï¼Œä¿ç•™å¾…å‘è¯·æ±‚ï¼ˆæŠ¢å æ—¶ä½¿ç”¨ï¼‰
+    /// </summary>
+    private bool StopInternal()
+    {
+        if (activeRequest == null || completed) return false;
+        stopped = true;
+        activeRequest.Abort();
+        return true;
+    }
+
+    /// <summary>
+    /// å”¯ä¸€è¯·æ±‚å…¥å£ï¼šç©ºé—²ç›´æ¥å‘ï¼›å¿™ç¢Œåˆ™æŒ‚èµ·å¹¶æŠ¢å 
+    /// </summary>
+    private void Enqueue(Action startRequest)
+    {
+        if (IsBusy)
+        {
+            pendingRequest = startRequest;
+            StopInternal();
+            return;
+        }
+
+        startRequest();
     }
 
     #endregion
 
-    #region Á÷Ê½ÇëÇóºËĞÄ
+    #region æµå¼è¯·æ±‚
 
-    private IEnumerator SendRequest(string url, string jsonBody, Action<string> chunkCallback, Action completeCallback)
+    private IEnumerator SendRequest(string url, string jsonBody, Action<string> chunkCallback, Action completeCallback, Action onStart)
     {
+        IsBusy = true;
+        stopped = false;
+        completed = false;
+
         chunks.Clear();
         buffer.Clear();
         rawBody.Clear();
@@ -212,33 +258,61 @@ public class AIClient : MonoBehaviour
         onChunk = chunkCallback;
         onComplete = completeCallback;
 
+        // åªæœ‰çœŸæ­£è½®åˆ°æœ¬è¯·æ±‚æ—¶ï¼Œæ‰åˆå§‹åŒ–æ¸²æŸ“ç›®æ ‡
+        onStart?.Invoke();
+
         using var request = new UnityWebRequest(url, "POST");
         request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonBody));
         request.downloadHandler = new StreamHandler(chunks);
         request.SetRequestHeader("Content-Type", "application/json");
         request.timeout = 300;
+        activeRequest = request;
 
         var operation = request.SendWebRequest();
-        while (!operation.isDone)
+        while (!operation.isDone && !stopped)
         {
             ProcessChunks();
             yield return null;
         }
 
-        ProcessChunks();
-
-        if (buffer.Length > 0)
+        if (stopped)
         {
-            ProcessLine(buffer.ToString().TrimEnd('\r'));
-            buffer.Clear();
+            // Abort åé˜Ÿåˆ—é‡Œå¯èƒ½æœ‰æ®‹ç•™ï¼Œæ¸…æ‰é¿å…ç»§ç»­å†’å­—
+            chunks.Clear();
+        }
+        else
+        {
+            ProcessChunks();
+
+            if (buffer.Length > 0)
+            {
+                ProcessLine(buffer.ToString().TrimEnd('\r'));
+                buffer.Clear();
+            }
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError($"è¯·æ±‚å¤±è´¥ï¼š{request.responseCode} {request.error}\n{rawBody}");
+            }
         }
 
-        if (request.result != UnityWebRequest.Result.Success)
+        activeRequest = null;
+        IsBusy = false;
+
+        // â‘  å…ˆè®©æ—§é¢æ¿æ”¶å°¾ï¼ˆæ¸²æŸ“ç›®æ ‡ä»æ˜¯å®ƒè‡ªå·±çš„ï¼‰
+        if (!completed)
         {
-            Debug.LogError($"ÇëÇóÊ§°Ü£º{request.responseCode} {request.error}\n{rawBody}");
+            completed = true;
+            onComplete?.Invoke();
         }
 
-        onComplete?.Invoke();
+        // â‘¡ å†å¯åŠ¨æŠ¢å çš„è¯·æ±‚
+        if (pendingRequest != null)
+        {
+            var next = pendingRequest;
+            pendingRequest = null;
+            next();
+        }
     }
 
     private void ProcessChunks()
@@ -281,7 +355,7 @@ public class AIClient : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.LogWarning($"½âÎöÁ÷Ê½Êı¾İÊ§°Ü£º{e.Message}");
+            Debug.LogWarning($"è§£ææµå¼æ•°æ®å¤±è´¥ï¼š{e.Message}");
         }
     }
 

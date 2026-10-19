@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,51 +5,84 @@ using UnityEngine.UI;
 public class AIKnowledgeDBChatPanel : MonoBehaviour
 {
     [SerializeField] TMP_InputField userInput;
-    [SerializeField] Button sendBtn,clearBtn;
+    [SerializeField] Button sendBtn, clearBtn;
+    [SerializeField] Image statusImage;
+    [SerializeField] Sprite idleSprite, stopSprite;
     [SerializeField] RectTransform content;
     [SerializeField] GameObject questionItemPrefab, answerItemPrefab;
+
+    private bool isMine;
+
     private void Start()
     {
-        sendBtn.onClick.AddListener(() =>OnInputSubmit(userInput.text));
+        sendBtn.onClick.AddListener(OnSendBtnClick);
         userInput.onSubmit.AddListener(OnInputSubmit);
-        clearBtn.onClick.AddListener(()=>
+        clearBtn.onClick.AddListener(ClearAll);
+        RefreshSendBtn();
+    }
+
+    private void OnSendBtnClick()
+    {
+        if (isMine && AIClient.Instance.IsBusy)
         {
-            for (int i = content.childCount - 1; i >= 0 ; i--)
-            {
-                Destroy(content.GetChild(i).gameObject);
-            }
-        });
+            AIClient.Instance.StopStream();
+            isMine = false;
+            RefreshSendBtn();
+            return;
+        }
+
+        OnInputSubmit(userInput.text);
     }
 
     private void OnInputSubmit(string text)
     {
         if (string.IsNullOrWhiteSpace(text)) return;
+        if (isMine && AIClient.Instance.IsBusy) return;
 
-        //ÓÃ»§ÎÊÌâ
+        // ç”¨æˆ·æé—®
         var questionItem = Instantiate(questionItemPrefab, content);
         questionItem.GetComponentInChildren<TMP_Text>().text = text;
 
-        //»Ø´ğÏî + äÖÈ¾Æ÷
+        // å›ç­”é¡¹ + æ¸²æŸ“å™¨
         var answerItem = Instantiate(answerItemPrefab, content);
         var aText = answerItem.GetComponentInChildren<TMP_Text>();
-        var renderer=MarkdownRenderer.Instance;
-        renderer.Init(aText);
+        var renderer = MarkdownRenderer.Instance;
 
-        //Á÷Ê½
+        isMine = true;
+        clearBtn.interactable = false;
+        RefreshSendBtn();
+
         AIClient.Instance.SendExperimentQA(
             text,
             chunk => renderer.Append(chunk),
             () =>
             {
+                isMine = false;
                 renderer.RenderNow();
                 LayoutRebuilder.ForceRebuildLayoutImmediate(content);
-            }
-        );
+                clearBtn.interactable = true;
+                RefreshSendBtn();
+            },
+            () => renderer.Init(aText));
 
-        //ÊÕÎ²
+        // æ”¶å°¾
         userInput.text = "";
         userInput.ActivateInputField();
         LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+    }
 
+    private void ClearAll()
+    {
+        for (int i = content.childCount - 1; i >= 0; i--)
+        {
+            Destroy(content.GetChild(i).gameObject);
+        }
+    }
+
+    private void RefreshSendBtn()
+    {
+        bool showStop = isMine && AIClient.Instance.IsBusy;
+        statusImage.sprite = showStop ? stopSprite : idleSprite;
+        sendBtn.interactable = true;
     }
 }
