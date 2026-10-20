@@ -33,6 +33,8 @@ public class AIClient : MonoBehaviour
 
     private UnityWebRequest activeRequest;
     private Action pendingRequest;
+    private object activeOwner;
+    private object pendingOwner;
     private bool stopped;
     private bool completed;
 
@@ -59,6 +61,12 @@ public class AIClient : MonoBehaviour
     private class Delta
     {
         public string content;
+    }
+
+    [Serializable]
+    private class ErrorResponse
+    {
+        public string detail;
     }
 
     [Serializable]
@@ -142,60 +150,45 @@ public class AIClient : MonoBehaviour
     /// <summary>
     /// 实验分析：直接传入 JSON 字符串
     /// </summary>
-    public void SendAnalyze(string json, Action<string> chunkCallback, Action completeCallback = null, Action onStart = null)
+    public string SendAnalyze(string json, Action<string> chunkCallback, Action completeCallback = null, Action onStart = null, object owner = null)
     {
-        if (string.IsNullOrEmpty(json))
-        {
-            Debug.LogError("experimentDataJson 为空");
-            completeCallback?.Invoke();
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(json))
+            return Fail("实验数据为空");
 
         if (string.IsNullOrEmpty(analyzeUrl))
-        {
-            Debug.LogError("analyzeUrl 未配置，请检查 StreamingAssets/AIConfig.json");
-            completeCallback?.Invoke();
-            return;
-        }
+            return Fail("analyzeUrl 未配置，请检查 StreamingAssets/AIConfig.json");
 
-        Enqueue(() => StartCoroutine(SendRequest(analyzeUrl, json, chunkCallback, completeCallback, onStart)));
+        Enqueue(() => StartCoroutine(SendRequest(analyzeUrl, json, chunkCallback, completeCallback, onStart)), owner);
+        return null;
     }
 
     /// <summary>
     /// 普通聊天
     /// </summary>
-    public void SendChat(string message, Action<string> chunkCallback, Action completeCallback = null, Action onStart = null)
+    public string SendChat(string message, Action<string> chunkCallback, Action completeCallback = null, Action onStart = null, object owner = null)
     {
+        if (string.IsNullOrWhiteSpace(message))
+            return Fail("消息为空");
+
         if (string.IsNullOrEmpty(chatUrl))
-        {
-            Debug.LogError("chatUrl 未配置，请检查 StreamingAssets/AIConfig.json");
-            completeCallback?.Invoke();
-            return;
-        }
+            return Fail("chatUrl 未配置，请检查 StreamingAssets/AIConfig.json");
 
         var body = new ChatRequestBody { message = message };
         string json = JsonUtility.ToJson(body);
-        Enqueue(() => StartCoroutine(SendRequest(chatUrl, json, chunkCallback, completeCallback, onStart)));
+        Enqueue(() => StartCoroutine(SendRequest(chatUrl, json, chunkCallback, completeCallback, onStart)), owner);
+        return null;
     }
 
     /// <summary>
     /// 实验知识问答：指定实验名称，基于知识库回答
     /// </summary>
-    public void SendExperimentQA(string question, Action<string> chunkCallback, Action completeCallback = null, Action onStart = null)
+    public string SendExperimentQA(string question, Action<string> chunkCallback, Action completeCallback = null, Action onStart = null, object owner = null)
     {
         if (string.IsNullOrWhiteSpace(question))
-        {
-            Debug.LogError("question 为空");
-            completeCallback?.Invoke();
-            return;
-        }
+            return Fail("问题为空");
 
         if (string.IsNullOrEmpty(experimentQAUrl))
-        {
-            Debug.LogError("experimentQAUrl 未配置，请检查 StreamingAssets/AIConfig.json");
-            completeCallback?.Invoke();
-            return;
-        }
+            return Fail("experimentQAUrl 未配置，请检查 StreamingAssets/AIConfig.json");
 
         var body = new ExperimentQARequestBody
         {
@@ -203,16 +196,26 @@ public class AIClient : MonoBehaviour
             question = question
         };
 
-        Enqueue(() => StartCoroutine(SendRequest(experimentQAUrl, JsonUtility.ToJson(body), chunkCallback, completeCallback, onStart)));
+        Enqueue(() => StartCoroutine(SendRequest(experimentQAUrl, JsonUtility.ToJson(body), chunkCallback, completeCallback, onStart)), owner);
+        return null;
     }
 
-    /// <summary>
-    /// 用户主动停止：同时清空待发请求
-    /// </summary>
-    public bool StopStream()
+    public void Cancel(object owner)
     {
-        pendingRequest = null;
-        return StopInternal();
+        if (ReferenceEquals(pendingOwner, owner))
+        {
+            pendingRequest = null;
+            pendingOwner = null;
+        }
+
+        if (ReferenceEquals(activeOwner, owner))
+            StopInternal();
+    }
+
+    private static string Fail(string message)
+    {
+        Debug.LogError(message);
+        return message;
     }
 
     /// <summary>
@@ -229,15 +232,17 @@ public class AIClient : MonoBehaviour
     /// <summary>
     /// 唯一请求入口：空闲直接发；忙碌则挂起并抢占
     /// </summary>
-    private void Enqueue(Action startRequest)
+    private void Enqueue(Action startRequest, object owner)
     {
         if (IsBusy)
         {
             pendingRequest = startRequest;
+            pendingOwner = owner;
             StopInternal();
             return;
         }
 
+        activeOwner = owner;
         startRequest();
     }
 
@@ -292,11 +297,14 @@ public class AIClient : MonoBehaviour
 
             if (request.result != UnityWebRequest.Result.Success)
             {
+                string message = BuildErrorMessage(request);
                 Debug.LogError($"请求失败：{request.responseCode} {request.error}\n{rawBody}");
+                onChunk?.Invoke($"\n\n**请求失败**：{message}");
             }
         }
 
         activeRequest = null;
+        activeOwner = null;
         IsBusy = false;
 
         // ① 先让旧面板收尾（渲染目标仍是它自己的）
@@ -311,6 +319,8 @@ public class AIClient : MonoBehaviour
         {
             var next = pendingRequest;
             pendingRequest = null;
+            activeOwner = pendingOwner;
+            pendingOwner = null;
             next();
         }
     }
@@ -357,6 +367,36 @@ public class AIClient : MonoBehaviour
         {
             Debug.LogWarning($"解析流式数据失败：{e.Message}");
         }
+    }
+
+    private string BuildErrorMessage(UnityWebRequest request)
+    {
+        string prefix = request.responseCode > 0
+            ? $"HTTP {request.responseCode}"
+            : "网络异常";
+
+        string body = rawBody.ToString().Trim();
+        if (!string.IsNullOrEmpty(body))
+        {
+            try
+            {
+                ErrorResponse error = JsonUtility.FromJson<ErrorResponse>(body);
+                if (error != null && !string.IsNullOrEmpty(error.detail))
+                {
+                    return $"{prefix}：{error.detail}";
+                }
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        if (!string.IsNullOrEmpty(request.error))
+        {
+            return $"{prefix}：{request.error}";
+        }
+
+        return prefix;
     }
 
     private class StreamHandler : DownloadHandlerScript

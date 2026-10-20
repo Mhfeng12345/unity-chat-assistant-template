@@ -12,6 +12,7 @@ public class AIKnowledgeDBChatPanel : MonoBehaviour
     [SerializeField] GameObject questionItemPrefab, answerItemPrefab;
 
     private bool isMine;
+    private int requestVersion;
 
     private void Start()
     {
@@ -25,8 +26,10 @@ public class AIKnowledgeDBChatPanel : MonoBehaviour
     {
         if (isMine && AIClient.Instance.IsBusy)
         {
-            AIClient.Instance.StopStream();
+            requestVersion++;
+            AIClient.Instance.Cancel(this);
             isMine = false;
+            clearBtn.interactable = true;
             RefreshSendBtn();
             return;
         }
@@ -39,20 +42,22 @@ public class AIKnowledgeDBChatPanel : MonoBehaviour
         if (string.IsNullOrWhiteSpace(text)) return;
         if (isMine && AIClient.Instance.IsBusy) return;
 
-        // 用户提问
-        var questionItem = Instantiate(questionItemPrefab, content);
-        questionItem.GetComponentInChildren<TMP_Text>().text = text;
+        Instantiate(questionItemPrefab, content).GetComponentInChildren<TMP_Text>().text = text;
 
-        // 回答项 + 渲染器
-        var answerItem = Instantiate(answerItemPrefab, content);
-        var aText = answerItem.GetComponentInChildren<TMP_Text>();
+        var aText = Instantiate(answerItemPrefab, content).GetComponentInChildren<TMP_Text>();
         var renderer = MarkdownRenderer.Instance;
+        int version = ++requestVersion;
 
-        AIClient.Instance.SendExperimentQA(
+        string error = AIClient.Instance.SendExperimentQA(
             text,
-            chunk => renderer.Append(chunk),
+            chunk =>
+            {
+                if (version != requestVersion) return;
+                renderer.Append(chunk);
+            },
             () =>
             {
+                if (version != requestVersion) return;
                 isMine = false;
                 renderer.RenderNow();
                 LayoutRebuilder.ForceRebuildLayoutImmediate(content);
@@ -61,24 +66,43 @@ public class AIKnowledgeDBChatPanel : MonoBehaviour
             },
             () =>
             {
+                if (version != requestVersion) return;
                 isMine = true;
                 clearBtn.interactable = false;
                 renderer.Init(aText);
                 RefreshSendBtn();
-            });
+            },
+            this);
 
-        // 收尾
-        userInput.text = "";
-        userInput.ActivateInputField();
+        if (error != null)
+        {
+            aText.text = $"请求失败：{error}";
+            clearBtn.interactable = true;
+            RefreshSendBtn();
+        }
+        else
+        {
+            userInput.text = "";
+            userInput.ActivateInputField();
+        }
+
         LayoutRebuilder.ForceRebuildLayoutImmediate(content);
     }
 
     private void ClearAll()
     {
+        requestVersion++;
+        AIClient.Instance.Cancel(this);
+        isMine = false;
+        clearBtn.interactable = true;
+        RefreshSendBtn();
+
         for (int i = content.childCount - 1; i >= 0; i--)
         {
             Destroy(content.GetChild(i).gameObject);
         }
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(content);
     }
 
     private void RefreshSendBtn()

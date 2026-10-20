@@ -27,7 +27,7 @@ public class AIExpAnalyzePanel : MonoBehaviour
     {
         if (isMine && AIClient.Instance.IsBusy)
         {
-            AIClient.Instance.StopStream();
+            AIClient.Instance.Cancel(this);
             isMine = false;
             RefreshSendBtn();
             return;
@@ -38,7 +38,7 @@ public class AIExpAnalyzePanel : MonoBehaviour
 
     public void SendAIAnalyze()
     {
-        AIClient.Instance.SendAnalyze(
+        string error = AIClient.Instance.SendAnalyze(
             experimentDataJson,
             chunk => MarkdownRenderer.Instance.Append(chunk),
             () =>
@@ -53,7 +53,16 @@ public class AIExpAnalyzePanel : MonoBehaviour
                 isMine = true;
                 MarkdownRenderer.Instance.Init(answerText);
                 RefreshSendBtn();
-            });
+            },
+            this);
+
+        if (error != null)
+        {
+            answerText.text = $"请求失败：{error}";
+            isMine = false;
+            LayoutRebuilder.ForceRebuildLayoutImmediate(answerText.transform.parent as RectTransform);
+            RefreshSendBtn();
+        }
     }
 
     private void RefreshSendBtn()
