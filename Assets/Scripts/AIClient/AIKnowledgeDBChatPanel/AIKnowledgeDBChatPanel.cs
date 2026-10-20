@@ -48,10 +48,6 @@ public class AIKnowledgeDBChatPanel : MonoBehaviour
         var aText = answerItem.GetComponentInChildren<TMP_Text>();
         var renderer = MarkdownRenderer.Instance;
 
-        isMine = true;
-        clearBtn.interactable = false;
-        RefreshSendBtn();
-
         AIClient.Instance.SendExperimentQA(
             text,
             chunk => renderer.Append(chunk),
@@ -63,7 +59,13 @@ public class AIKnowledgeDBChatPanel : MonoBehaviour
                 clearBtn.interactable = true;
                 RefreshSendBtn();
             },
-            () => renderer.Init(aText));
+            () =>
+            {
+                isMine = true;
+                clearBtn.interactable = false;
+                renderer.Init(aText);
+                RefreshSendBtn();
+            });
 
         // 收尾
         userInput.text = "";
