@@ -38,9 +38,6 @@ public class AIExpAnalyzePanel : MonoBehaviour
 
     public void SendAIAnalyze()
     {
-        isMine = true;
-        RefreshSendBtn();
-
         AIClient.Instance.SendAnalyze(
             experimentDataJson,
             chunk => MarkdownRenderer.Instance.Append(chunk),
@@ -51,7 +48,12 @@ public class AIExpAnalyzePanel : MonoBehaviour
                 LayoutRebuilder.ForceRebuildLayoutImmediate(answerText.transform.parent as RectTransform);
                 RefreshSendBtn();
             },
-            () => MarkdownRenderer.Instance.Init(answerText));
+            () =>
+            {
+                isMine = true;
+                MarkdownRenderer.Instance.Init(answerText);
+                RefreshSendBtn();
+            });
     }
 
     private void RefreshSendBtn()
