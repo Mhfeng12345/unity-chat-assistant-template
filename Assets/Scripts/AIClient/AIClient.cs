@@ -14,7 +14,7 @@ public class AIClient : MonoBehaviour
     [Tooltip("StreamingAssets 下的配置文件名")]
     [SerializeField] private string configFileName = "AIConfig.json";
 
-    public string currentExperimentName;
+    public string currentExperimentKey;
     private string analyzeUrl;
     private string chatUrl;
     private string experimentQAUrl;
@@ -42,7 +42,7 @@ public class AIClient : MonoBehaviour
     private class AIConfig
     {
         public string aiUrl;
-        public string currentExperimentName;
+        public string currentExperimentKey;
     }
 
     [Serializable]
@@ -78,7 +78,7 @@ public class AIClient : MonoBehaviour
     [Serializable]
     private class ExperimentQARequestBody
     {
-        public string experiment_name;
+        public string experiment_key;
         public string question;
     }
 
@@ -128,7 +128,7 @@ public class AIClient : MonoBehaviour
                 return;
             }
 
-            currentExperimentName = config.currentExperimentName;
+            currentExperimentKey = config.currentExperimentKey;
 
             // 去掉末尾多余的 /
             string baseUrl = config.aiUrl.TrimEnd('/');
@@ -180,7 +180,7 @@ public class AIClient : MonoBehaviour
     }
 
     /// <summary>
-    /// 实验知识问答：指定实验名称，基于知识库回答
+    /// 实验知识问答：指定实验简称，基于知识库回答
     /// </summary>
     public string SendExperimentQA(string question, Action<string> chunkCallback, Action completeCallback = null, Action onStart = null, object owner = null)
     {
@@ -192,7 +192,7 @@ public class AIClient : MonoBehaviour
 
         var body = new ExperimentQARequestBody
         {
-            experiment_name = currentExperimentName,
+            experiment_key = currentExperimentKey,
             question = question
         };
 
