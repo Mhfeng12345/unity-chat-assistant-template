@@ -70,6 +70,7 @@ public class AIKnowledgeDBChatPanel : MonoBehaviour
                 isMine = true;
                 clearBtn.interactable = false;
                 renderer.Init(aText);
+                aText.text = "<color=#999999>AI 思考中…</color>";
                 RefreshSendBtn();
             },
             this);
