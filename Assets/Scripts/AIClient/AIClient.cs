@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
+using static AIUsageTracker;
 
 public class AIClient : MonoBehaviour
 {
@@ -31,6 +32,9 @@ public class AIClient : MonoBehaviour
     private Action<string> onChunk;
     private Action onComplete;
 
+    /// <summary>收到 AI 使用统计事件（type=usage）时触发</summary>
+    public event Action<AiUsage> OnAIUsageReceived;
+
     private UnityWebRequest activeRequest;
     private Action pendingRequest;
     private object activeOwner;
@@ -48,6 +52,8 @@ public class AIClient : MonoBehaviour
     [Serializable]
     private class StreamResponse
     {
+        public string type;
+        public AiUsage usage;
         public StreamChoice[] choices;
     }
 
@@ -357,6 +363,16 @@ public class AIClient : MonoBehaviour
         try
         {
             StreamResponse response = JsonUtility.FromJson<StreamResponse>(json);
+
+            if (response != null && response.type == "usage" && response.usage != null)
+            {
+                AIUsageTracker.Record(response.usage);
+                OnAIUsageReceived?.Invoke(response.usage);
+                Debug.Log($"[AIUsage] {response.usage.scenario} in={response.usage.input_tokens} out={response.usage.output_tokens} count={AIUsageTracker.ai_data.ai_call_count} \n" +
+                    $"ai_input_token_count={AIUsageTracker.ai_data.ai_input_token_count}  ai_output_token_count={AIUsageTracker.ai_data.ai_output_token_count}");
+                return;
+            }
+
             string content = response?.choices?[0]?.delta?.content;
             if (!string.IsNullOrEmpty(content))
             {
@@ -367,6 +383,12 @@ public class AIClient : MonoBehaviour
         {
             Debug.LogWarning($"解析流式数据失败：{e.Message}");
         }
+    }
+
+    [ContextMenu("Dump AIUsage")]
+    private void DumpAIUsage()
+    {
+        Debug.Log(AIUsageTracker.BuildAiDataJson());
     }
 
     private string BuildErrorMessage(UnityWebRequest request)
