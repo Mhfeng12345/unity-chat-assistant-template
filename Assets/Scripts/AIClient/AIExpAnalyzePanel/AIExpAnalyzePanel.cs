@@ -52,6 +52,7 @@ public class AIExpAnalyzePanel : MonoBehaviour
             {
                 isMine = true;
                 MarkdownRenderer.Instance.Init(answerText);
+                answerText.text = "<color=#999999>AI 思考中…</color>";
                 RefreshSendBtn();
             },
             this);
