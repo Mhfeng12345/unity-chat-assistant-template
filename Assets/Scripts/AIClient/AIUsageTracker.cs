@@ -12,7 +12,7 @@ public class AiUsage
     public bool estimated;
 }
 
-/// <summary>会话级 AI 统计：实验开始 Reset，AIClient 收到 usage 自动累计，提交时取 ai_data。</summary>
+/// <summary>会话级 AI 统计：实验开始 Reset，AIClient 收到 usage 自动累计，提交时 JsonUtility.ToJson(ai_data)。</summary>
 public static class AIUsageTracker
 {
     [Serializable]
@@ -40,13 +40,20 @@ public static class AIUsageTracker
         ai_data.ai_call_count += u.call_count;
         ai_data.ai_input_token_count += u.input_tokens;
         ai_data.ai_output_token_count += u.output_tokens;
+
         if (!ai_data.ai_usage_scenarios.Contains(u.scenario))
             ai_data.ai_usage_scenarios.Add(u.scenario);
-        if (ai_data.ai_models_used.Count == 0)
-            ai_data.ai_models_used.Add(new AiDataModel { model = u.model, version = u.version,
-                deployment = u.deployment, provider = u.provider });
+
+        if (!ai_data.ai_models_used.Exists(m => m.model == u.model))
+            ai_data.ai_models_used.Add(new AiDataModel
+            {
+                model = u.model,
+                version = u.version,
+                deployment = u.deployment,
+                provider = u.provider
+            });
+
         if (u.estimated)
             ai_data.ai_remark = "部分Token为估算值";
     }
-    public static string BuildAiDataJson() => "{\"ai_data\":" + JsonUtility.ToJson(ai_data) + "}";
 }

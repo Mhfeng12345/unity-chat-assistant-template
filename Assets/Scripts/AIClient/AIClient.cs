@@ -388,7 +388,7 @@ public class AIClient : MonoBehaviour
     [ContextMenu("Dump AIUsage")]
     private void DumpAIUsage()
     {
-        Debug.Log(AIUsageTracker.BuildAiDataJson());
+        Debug.Log(JsonUtility.ToJson(AIUsageTracker.ai_data));
     }
 
     private string BuildErrorMessage(UnityWebRequest request)
