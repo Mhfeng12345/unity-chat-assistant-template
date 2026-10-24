@@ -98,7 +98,6 @@ public class AIClient : MonoBehaviour
     {
         string path = Path.Combine(Application.streamingAssetsPath, configFileName);
 
-#if UNITY_ANDROID && !UNITY_EDITOR
         using var request = UnityWebRequest.Get(path);
         yield return request.SendWebRequest();
 
@@ -109,17 +108,6 @@ public class AIClient : MonoBehaviour
         }
 
         ParseConfig(request.downloadHandler.text);
-#else
-        if (!File.Exists(path))
-        {
-            Debug.LogError($"找不到配置文件: {path}");
-            yield break;
-        }
-
-        string json = File.ReadAllText(path);
-        ParseConfig(json);
-        yield break;
-#endif
     }
 
     private void ParseConfig(string json)

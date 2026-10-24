@@ -20,7 +20,7 @@ public class ExpStep
     public string remarks = "";
 
     /// <summary>结束计时，写入得分与评价。</summary>
-    public void Finish(int score, string evaluation)
+    public void FinishStep(int score, string evaluation)
     {
         this.score = score;
         this.evaluation = evaluation;
@@ -48,13 +48,13 @@ public class ExpData
 /// string json = ExpStepsData.GetExpData();                 // 提交时
 /// </code>
 /// </summary>
-public static class ExpStepsData
+public static class ExpStepsData_ilab
 {
     public static readonly List<ExpStep> Steps = new List<ExpStep>();
 
 
     /// <summary>开始记录一步（自动打开始时间），返回该步对象，其余字段可直接改。</summary>
-    public static ExpStep Start(string title, string scoringModel, int maxScore = 100, int expectTime = 0)
+    public static ExpStep StartStep(string title, string scoringModel, int maxScore = 100, int expectTime = 0)
     {
         var step = new ExpStep
         {
