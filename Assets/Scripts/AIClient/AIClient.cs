@@ -11,6 +11,16 @@ public class AIClient : MonoBehaviour
 {
     public static AIClient Instance;
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+    // 浏览器环境：走 JS XHR 增量读取（UnityWebRequest 在 WebGL 构建会被浏览器整体缓冲，无法流式）
+    // 全限定名：即使 IDE 清理 using 也不会丢（__Internal 绑定只看方法名）
+    [System.Runtime.InteropServices.DllImport("__Internal")]
+    private static extern void AIClientStreamBegin(string gameObjectName, string url, string jsonBody);
+
+    [System.Runtime.InteropServices.DllImport("__Internal")]
+    private static extern void AIClientStreamAbort();
+#endif
+
     [Header("配置")]
     [Tooltip("StreamingAssets 下的配置文件名")]
     [SerializeField] private string configFileName = "AIConfig.json";
@@ -41,6 +51,11 @@ public class AIClient : MonoBehaviour
     private object pendingOwner;
     private bool stopped;
     private bool completed;
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+    private bool streamCompleted;
+    private string streamError;
+#endif
 
     [Serializable]
     private class AIConfig
@@ -142,7 +157,7 @@ public class AIClient : MonoBehaviour
     #region 对外接口
 
     /// <summary>
-    /// 实验分析：直接传入 JSON 字符串
+    /// 实验分析: 直接传入 JSON 字符串
     /// </summary>
     public string SendAnalyze(string json, Action<string> chunkCallback, Action completeCallback = null, Action onStart = null, object owner = null)
     {
@@ -217,9 +232,13 @@ public class AIClient : MonoBehaviour
     /// </summary>
     private bool StopInternal()
     {
-        if (activeRequest == null || completed) return false;
+        if (completed) return false;
         stopped = true;
-        activeRequest.Abort();
+#if UNITY_WEBGL && !UNITY_EDITOR
+        AIClientStreamAbort();
+#else
+        if (activeRequest != null) activeRequest.Abort();
+#endif
         return true;
     }
 
@@ -249,6 +268,10 @@ public class AIClient : MonoBehaviour
         IsBusy = true;
         stopped = false;
         completed = false;
+#if UNITY_WEBGL && !UNITY_EDITOR
+        streamCompleted = false;
+        streamError = null;
+#endif
 
         chunks.Clear();
         buffer.Clear();
@@ -260,6 +283,24 @@ public class AIClient : MonoBehaviour
         // 只有真正轮到本请求时，才初始化渲染目标
         onStart?.Invoke();
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+        // 浏览器：JS XHR 增量读取，数据通过 OnStreamChunk 推回共享管道
+        AIClientStreamBegin(gameObject.name, url, jsonBody);
+        while (!streamCompleted && !stopped)
+        {
+            yield return null;
+        }
+
+        if (stopped)
+        {
+            chunks.Clear();
+        }
+        else if (streamError != null)
+        {
+            Debug.LogError($"请求失败：{streamError}\n{rawBody}");
+            onChunk?.Invoke($"\n\n**请求失败**：{streamError}");
+        }
+#else
         using var request = new UnityWebRequest(url, "POST");
         request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonBody));
         request.downloadHandler = new StreamHandler(chunks);
@@ -296,6 +337,7 @@ public class AIClient : MonoBehaviour
                 onChunk?.Invoke($"\n\n**请求失败**：{message}");
             }
         }
+#endif
 
         activeRequest = null;
         activeOwner = null;
@@ -324,18 +366,25 @@ public class AIClient : MonoBehaviour
         while (chunks.TryDequeue(out byte[] data))
         {
             int count = decoder.GetChars(data, 0, data.Length, chars, 0, false);
-            string text = new string(chars, 0, count);
-            buffer.Append(text);
-            rawBody.Append(text);
+            FeedLineData(new string(chars, 0, count));
         }
+    }
+
+    /// <summary>
+    /// 共享管道：原生解码结果与 WebGL JS 回调都从这里灌入，统一拆行解析
+    /// </summary>
+    private void FeedLineData(string text)
+    {
+        buffer.Append(text);
+        rawBody.Append(text);
 
         while (true)
         {
-            string text = buffer.ToString();
-            int newline = text.IndexOf('\n');
+            string current = buffer.ToString();
+            int newline = current.IndexOf('\n');
             if (newline < 0) break;
 
-            string line = text.Substring(0, newline).TrimEnd('\r');
+            string line = current.Substring(0, newline).TrimEnd('\r');
             buffer.Remove(0, newline + 1);
             ProcessLine(line);
         }
@@ -372,6 +421,13 @@ public class AIClient : MonoBehaviour
             Debug.LogWarning($"解析流式数据失败：{e.Message}");
         }
     }
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+    // 被 .jslib 的 SendMessage 调用
+    public void OnStreamChunk(string text) => FeedLineData(text);
+    public void OnStreamComplete() => streamCompleted = true;
+    public void OnStreamError(string info) { streamError = info; streamCompleted = true; }
+#endif
 
     [ContextMenu("Dump AIUsage")]
     private void DumpAIUsage()
