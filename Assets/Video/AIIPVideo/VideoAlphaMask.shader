@@ -1,13 +1,9 @@
-Shader "UI/GreenScreenTransparent"
+Shader "UI/VideoAlphaMask"
 {
     Properties
     {
         [PerRendererData] _MainTex ("Video Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
-
-        _KeyColor ("Key Color", Color) = (0,1,0,1)
-        _Threshold ("Threshold", Range(0, 1)) = 0.25
-        _Softness ("Edge Softness", Range(0.001, 0.5)) = 0.1
     }
 
     SubShader
@@ -53,9 +49,6 @@ Shader "UI/GreenScreenTransparent"
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
-                half4 _KeyColor;
-                half _Threshold;
-                half _Softness;
             CBUFFER_END
 
             Varyings vert(Attributes input)
@@ -69,24 +62,26 @@ Shader "UI/GreenScreenTransparent"
 
             half4 frag(Varyings input) : SV_Target
             {
-                half4 col = SAMPLE_TEXTURE2D(
-                    _MainTex, sampler_MainTex, input.uv
+                half2 uv = input.uv;
+
+                // 左半部分：彩色小人
+                half2 colorUV = half2(uv.x * 0.5, uv.y);
+
+                // 右半部分：白色剪影遮罩
+                half2 maskUV = half2(0.5 + uv.x * 0.5, uv.y);
+
+                half4 color = SAMPLE_TEXTURE2D(
+                    _MainTex, sampler_MainTex, colorUV
                 );
 
-                // 计算当前像素与背景色的 RGB 距离
-                half distance = length(col.rgb - _KeyColor.rgb);
+                half mask = SAMPLE_TEXTURE2D(
+                    _MainTex, sampler_MainTex, maskUV
+                ).r;
 
-                // 与背景色越接近，透明度越低
-                half alpha = smoothstep(
-                    _Threshold,
-                    _Threshold + _Softness,
-                    distance
-                );
+                color.rgb *= input.color.rgb;
+                color.a = mask * input.color.a;
 
-                col.rgb *= input.color.rgb;
-                col.a *= alpha * input.color.a;
-
-                return col;
+                return color;
             }
 
             ENDHLSL

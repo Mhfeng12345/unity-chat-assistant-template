@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 3546248698027893630}
   - component: {fileID: 5996276976181508095}
   - component: {fileID: 7197967043270242546}
+  - component: {fileID: 381475582552294433}
   - component: {fileID: 4916300376651643730}
   m_Layer: 5
   m_Name: RawImage_Video
@@ -18,7 +19,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &3546248698027893630
 RectTransform:
   m_ObjectHideFlags: 0
@@ -33,10 +34,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 7736646743435377418}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -498, y: 218}
-  m_SizeDelta: {x: 300, y: 300}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 99, y: 0}
+  m_SizeDelta: {x: 300, y: 600}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5996276976181508095
 CanvasRenderer:
@@ -58,9 +59,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 2100000, guid: bfd4622828ba6e743a1eba462bdd28a2, type: 2}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -73,6 +74,25 @@ MonoBehaviour:
     y: 0
     width: 1
     height: 1
+--- !u!114 &381475582552294433
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2194603091549830527}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a099657d3cce7fb4091565cb7c1f6285, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  videoPlayer: {fileID: 4916300376651643730}
+  videoClips:
+  - {fileID: 32900000, guid: 1a74e731a463c074891e3c01a85b9611, type: 3}
+  - {fileID: 32900000, guid: f276db6027768e64e85efa378f89efad, type: 3}
+  - {fileID: 32900000, guid: 65b05107c0324e744a6710a6ecd1f9df, type: 3}
+  - {fileID: 32900000, guid: 77cb0ab507ff408429f058fd98e89f8a, type: 3}
+  - {fileID: 32900000, guid: f8edfcb98bc59a844ad3c9d2a007c5d5, type: 3}
 --- !u!328 &4916300376651643730
 VideoPlayer:
   m_ObjectHideFlags: 0
@@ -81,7 +101,7 @@ VideoPlayer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2194603091549830527}
   m_Enabled: 1
-  m_VideoClip: {fileID: 32900000, guid: 408051a1d1990fd45975563293ba8476, type: 3}
+  m_VideoClip: {fileID: 32900000, guid: 65b05107c0324e744a6710a6ecd1f9df, type: 3}
   m_TargetCameraAlpha: 1
   m_TargetCamera3DLayout: 0
   m_TargetCamera: {fileID: 0}
@@ -103,7 +123,7 @@ VideoPlayer:
   m_ControlledAudioTrackCount: 0
   m_PlayOnAwake: 1
   m_SkipOnDrop: 1
-  m_Looping: 1
+  m_Looping: 0
   m_WaitForFirstFrame: 1
   m_FrameReadyEventEnabled: 0
   m_VideoShaders: []
@@ -431,6 +451,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Layer
       value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4717053104719528423, guid: 0345cc2cdcc8e9845a48653853efba8a,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4825498911041858452, guid: 0345cc2cdcc8e9845a48653853efba8a,
         type: 3}

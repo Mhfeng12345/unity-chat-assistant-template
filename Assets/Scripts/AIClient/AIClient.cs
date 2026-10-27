@@ -45,6 +45,12 @@ public class AIClient : MonoBehaviour
     /// <summary>收到 AI 使用统计事件（type=usage）时触发</summary>
     public event Action<AiUsage> OnAIUsageReceived;
 
+
+    public static event Action OnPanelOpened;
+
+    public static event Action OnPanelClosed;
+    public static bool IsPanelOpen { get; private set; }
+
     private UnityWebRequest activeRequest;
     private Action pendingRequest;
     private object activeOwner;
@@ -107,6 +113,18 @@ public class AIClient : MonoBehaviour
     {
         Instance = this;
         StartCoroutine(LoadConfig());
+    }
+
+    private void OnEnable()
+    {
+        IsPanelOpen = true;
+        OnPanelOpened?.Invoke();
+    }
+
+    private void OnDisable()
+    {
+        IsPanelOpen = false;
+        OnPanelClosed?.Invoke();
     }
 
     private IEnumerator LoadConfig()
