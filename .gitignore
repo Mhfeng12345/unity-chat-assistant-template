@@ -63,3 +63,6 @@ Thumbs.db
 *.sealed.*
 *.merge
 *.merge.*
+
+# IDE
+.vscode/
