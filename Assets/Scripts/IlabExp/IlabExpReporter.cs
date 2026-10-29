@@ -68,6 +68,9 @@ public class IlabExpReporter : MonoBehaviour
     [Tooltip("StreamingAssets 下的配置文件名")]
     [SerializeField] private string configFileName = "config.json";
 
+    /// <summary>Java 通过页面 URL 传入的 token（WebGL 下 Awake 解析，回传时拼到 URL）。</summary>
+    private string _token = "";
+
     readonly List<ExpStep> steps = new List<ExpStep>();
 
     /// <summary>只读查看已记录的步骤（注意 seq 只在取数时赋值）。</summary>
@@ -88,6 +91,14 @@ public class IlabExpReporter : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+        // Java 通过页面 URL 传 token：http://host/index.html?token=xxx
+        _token = GetUrlParam(Application.absoluteURL, "token");
+        if (!string.IsNullOrEmpty(_token))
+            Debug.Log($"[IlabExpReporter] 已从 URL 获取 token={_token}");
+#endif
+
         StartCoroutine(LoadConfig());
     }
 
@@ -115,6 +126,29 @@ public class IlabExpReporter : MonoBehaviour
             Debug.LogError($"[IlabExpReporter] 解析 config.json 失败：{e.Message}");
         }
     }
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+    /// <summary>
+    /// 取 URL 查询串参数值（Unity 无内置解析，最小实现）。
+    /// 约定：token 由 Java 端按标准 URL 编码拼 query（+ 编为 %2B）；
+    /// UnEscapeURL 不把 + 当空格，故不会破坏 base64 的 +。
+    /// </summary>
+    static string GetUrlParam(string url, string key)
+    {
+        int q = url.IndexOf('?');
+        if (q < 0) return "";
+        string query = url.Substring(q + 1);
+        int hash = query.IndexOf('#');          // fragment 起，后面是前端路由
+        if (hash >= 0) query = query.Substring(0, hash);
+        foreach (string pair in query.Split('&'))
+        {
+            int eq = pair.IndexOf('=');
+            if (eq > 0 && pair.Substring(0, eq) == key)
+                return UnityWebRequest.UnEscapeURL(pair.Substring(eq + 1));
+        }
+        return "";
+    }
+#endif
 
     /// <summary>实验开始：清空步骤与 AI 统计。</summary>
     public void ResetExperiment()
@@ -167,7 +201,11 @@ public class IlabExpReporter : MonoBehaviour
             onDone?.Invoke(false, "serverUrl 未配置");
             return;
         }
-        StartCoroutine(PostJson(serverUrl, GetExpData(status), onDone));
+
+        string url = string.IsNullOrEmpty(_token)
+            ? serverUrl
+            : serverUrl + (serverUrl.Contains("?") ? "&" : "?") + "token=" + UnityWebRequest.EscapeURL(_token);
+        StartCoroutine(PostJson(url, GetExpData(status), onDone));
     }
 
     /// <summary>用组件上当前 status 提交。</summary>
