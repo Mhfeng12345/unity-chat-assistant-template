@@ -33,10 +33,12 @@ public class ExpStep
     }
 }
 
-/// <summary>交给 Java 的实验数据：steps + ai_data + status（JsonUtility 需要对象根）。</summary>
+/// <summary>交给 Java 的实验数据：originId + expId + steps + ai_data + status（JsonUtility 需要对象根）。</summary>
 [Serializable]
 public class ExpData
 {
+    public string originId;   // 页面 URL 中 originId= 后面的值，放入 JSON body
+    public string expId;      // 页面 URL 中 expId= 后面的值，放入 JSON body
     public List<ExpStep> steps;
     public AIUsageTracker.AiData ai_data;
     public int status; // 1=已完成，2=未完成（对齐实验空间 data_upload）
@@ -44,8 +46,8 @@ public class ExpData
 
 /// <summary>
 /// 实验空间（ilab-x）对接入口：挂在场景中专门的 GameObject 上（切场景不删）。
-/// 记录实验步骤、累计 AI 统计，提交时产出 {"steps":[...],"ai_data":{...},"status":N}，
-/// 并 POST 到 Java 提供的接口（地址见 StreamingAssets/config.json 的 serverUrl）。
+/// 记录实验步骤、累计 AI 统计，提交时产出 {"originId":…,"expId":…,"steps":[…],"ai_data":{…},"status":N}，
+/// 并 POST 到 Java 提供的接口（serverUrl + /api/archive/dataUpload，地址见 StreamingAssets/config.json 的 serverUrl）。
 /// <code>
 /// IlabExpReporter.Instance.ResetExperiment();                       // 实验开始
 /// var step = IlabExpReporter.Instance.StartStep("装夹工件", "按操作规范赋分"); // 进入步骤
@@ -62,14 +64,18 @@ public class IlabExpReporter : MonoBehaviour
     public int status = 2;
 
     [Header("Java 上传接口")]
-    [Tooltip("Java 提供的 data_upload 对接地址；优先用 StreamingAssets/config.json 的 serverUrl 覆盖")]
+    [Tooltip("Java 提供的 data_upload 基础地址；代码会拼接 /api/archive/dataUpload；优先被 StreamingAssets/config.json 的 serverUrl 覆盖")]
     public string serverUrl = "";
 
     [Tooltip("StreamingAssets 下的配置文件名")]
     [SerializeField] private string configFileName = "config.json";
 
-    /// <summary>Java 通过页面 URL 传入的 token（WebGL 下 Awake 解析，回传时拼到 URL）。</summary>
+    /// <summary>Java 页面 URL 中 token= 后面的值（WebGL 下 Awake 原样截取，回传时原样拼回 URL，不解码）。</summary>
     private string _token = "";
+    /// <summary>页面 URL 中 expId= 后面的值（原样，放入 JSON body）。</summary>
+    private string _expId = "";
+    /// <summary>页面 URL 中 originId= 后面的值（原样，放入 JSON body）。</summary>
+    private string _originId = "";
 
     readonly List<ExpStep> steps = new List<ExpStep>();
 
@@ -93,10 +99,12 @@ public class IlabExpReporter : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-        // Java 通过页面 URL 传 token：http://host/index.html?token=xxx
-        _token = GetUrlParam(Application.absoluteURL, "token");
+        // Java 通过页面 URL 传参：https://www.baidu.com/?token=xxx&expId=17&originId=...
+        _token = GetQueryParam(Application.absoluteURL, "token");
+        _expId = GetQueryParam(Application.absoluteURL, "expId");
+        _originId = GetQueryParam(Application.absoluteURL, "originId");
         if (!string.IsNullOrEmpty(_token))
-            Debug.Log($"[IlabExpReporter] 已从 URL 获取 token={_token}");
+            Debug.Log($"[IlabExpReporter] token={_token} expId={_expId} originId={_originId}");
 #endif
 
         StartCoroutine(LoadConfig());
@@ -128,23 +136,19 @@ public class IlabExpReporter : MonoBehaviour
     }
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-    /// <summary>
-    /// 取 URL 查询串参数值（Unity 无内置解析，最小实现）。
-    /// 约定：token 由 Java 端按标准 URL 编码拼 query（+ 编为 %2B）；
-    /// UnEscapeURL 不把 + 当空格，故不会破坏 base64 的 +。
-    /// </summary>
-    static string GetUrlParam(string url, string key)
+    /// <summary>取 URL 查询串中 key= 后面的值（原样，不解码；先去掉 #fragment）。</summary>
+    static string GetQueryParam(string url, string key)
     {
         int q = url.IndexOf('?');
         if (q < 0) return "";
         string query = url.Substring(q + 1);
-        int hash = query.IndexOf('#');          // fragment 起，后面是前端路由
+        int hash = query.IndexOf('#');
         if (hash >= 0) query = query.Substring(0, hash);
         foreach (string pair in query.Split('&'))
         {
             int eq = pair.IndexOf('=');
             if (eq > 0 && pair.Substring(0, eq) == key)
-                return UnityWebRequest.UnEscapeURL(pair.Substring(eq + 1));
+                return pair.Substring(eq + 1);   // 原样，不 UnEscapeURL
         }
         return "";
     }
@@ -172,7 +176,7 @@ public class IlabExpReporter : MonoBehaviour
         return step;
     }
 
-    /// <summary>组装交给 Java 的 JSON：{"steps":[...],"ai_data":{...},"status":N}。</summary>
+    /// <summary>组装交给 Java 的 JSON：{"originId":…,"expId":…,"steps":[…],"ai_data":{…},"status":N}。</summary>
     public string GetExpData(int status)
     {
         for (int i = 0; i < steps.Count; i++)
@@ -180,17 +184,13 @@ public class IlabExpReporter : MonoBehaviour
 
         return JsonUtility.ToJson(new ExpData
         {
+            originId = _originId,
+            expId = _expId,
             steps = steps,
             ai_data = AIUsageTracker.ai_data,
             status = status
         });
     }
-
-    /// <summary>用组件上当前 status 取 JSON。</summary>
-    public string GetExpData() => GetExpData(status);
-
-    /// <summary>设置当前实验状态（1=已完成，2=未完成）。</summary>
-    public void SetStatus(int s) => status = s;
 
     /// <summary>提交：按指定状态产出 JSON 并 POST 到 Java 接口。</summary>
     public void Submit(int status, Action<bool, string> onDone = null)
@@ -202,9 +202,10 @@ public class IlabExpReporter : MonoBehaviour
             return;
         }
 
+        string uploadUrl = serverUrl + "/api/archive/dataUpload";
         string url = string.IsNullOrEmpty(_token)
-            ? serverUrl
-            : serverUrl + (serverUrl.Contains("?") ? "&" : "?") + "token=" + UnityWebRequest.EscapeURL(_token);
+            ? uploadUrl
+            : uploadUrl + (uploadUrl.Contains("?") ? "&" : "?") + "token=" + _token;
         StartCoroutine(PostJson(url, GetExpData(status), onDone));
     }
 
