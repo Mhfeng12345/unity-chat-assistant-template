@@ -70,7 +70,7 @@ public class IlabExpReporter : MonoBehaviour
     [Tooltip("StreamingAssets 下的配置文件名")]
     [SerializeField] private string configFileName = "config.json";
 
-    /// <summary>Java 页面 URL 中 token= 后面的值（WebGL 下 Awake 原样截取，回传时原样拼回 URL，不解码）。</summary>
+    /// <summary>Java 页面 URL 中 token= 后面的值（WebGL 下 Awake 原样截取，回传时原样放请求头 token，不解码）。</summary>
     private string _token = "";
     /// <summary>页面 URL 中 expId= 后面的值（原样，放入 JSON body）。</summary>
     private string _expId = "";
@@ -202,10 +202,7 @@ public class IlabExpReporter : MonoBehaviour
             return;
         }
 
-        string uploadUrl = serverUrl + "/api/archive/dataUpload";
-        string url = string.IsNullOrEmpty(_token)
-            ? uploadUrl
-            : uploadUrl + (uploadUrl.Contains("?") ? "&" : "?") + "token=" + _token;
+        string url = serverUrl + "/api/archive/dataUpload";
         StartCoroutine(PostJson(url, GetExpData(status), onDone));
     }
 
@@ -218,6 +215,8 @@ public class IlabExpReporter : MonoBehaviour
         request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonBody));
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
+        if (!string.IsNullOrEmpty(_token))
+            request.SetRequestHeader("token", _token);   // token 原样放 header（非 WebGL 下恒空，不设）
         request.timeout = 300;
         yield return request.SendWebRequest();
 

@@ -53,13 +53,13 @@ public class IlabTestHelper : MonoBehaviour
         Debug.Log($"[IlabTestHelper] 已填充 {reporter.Steps.Count} 条测试步骤，可按 W 提交");
     }
 
-    /// <summary>创建一步，保证 timeUsed 与 endTime-startTime 一致（同帧调用不会出现几毫秒跨度的假象，避免 Java 报 timeUsed 缺失）。</summary>
+
     static void AddStep(IlabExpReporter reporter, string title, int score, string eval, int expectTime)
     {
         var s = reporter.StartStep(title, "赋分模型", maxScore: 10, expectTime: expectTime);
         s.FinishStep(score, eval);
-        s.timeUsed = expectTime;                        // 补成与 expectTime 一致
-        s.endTime = s.startTime + expectTime * 1000L;   // 时间跨度 = timeUsed 秒
+        s.timeUsed = expectTime; 
+        s.endTime = s.startTime + expectTime * 1000L; 
     }
 
     void SubmitDummy()
@@ -103,7 +103,7 @@ public class IlabTestHelper : MonoBehaviour
         // ai_data：沿用 AIUsageTracker 累计的真实值（跑完 AI 后有值；未跑则为默认全0/空）
         var aiData = AIUsageTracker.ai_data;
 
-        // 拼接成与 Java 接口完全一致的 JSON body
+
         var data = new ExpData
         {
             originId = testOriginId,
