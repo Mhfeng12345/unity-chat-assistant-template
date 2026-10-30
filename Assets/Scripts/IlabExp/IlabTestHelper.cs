@@ -45,22 +45,21 @@ public class IlabTestHelper : MonoBehaviour
 
         reporter.ResetExperiment();
 
-        // 步骤 1
-        var s1 = reporter.StartStep("步骤1：初始化", "赋分模型", maxScore: 10, expectTime: 60);
-        s1.FinishStep(8, "良");
-
-        // 步骤 2
-        var s2 = reporter.StartStep("步骤2：配置 I/O", "赋分模型", maxScore: 10, expectTime: 120);
-        s2.FinishStep(10, "优");
-
-        // 步骤 3~10（共 10 条，满足 Java 接口 status=1 对步骤数量的要求）
+        AddStep(reporter, "步骤1：初始化", 8, "良", 60);
+        AddStep(reporter, "步骤2：配置 I/O", 10, "优", 120);
         for (int i = 3; i <= 10; i++)
-        {
-            var s = reporter.StartStep($"步骤{i}", "赋分模型", maxScore: 10, expectTime: 30);
-            s.FinishStep(10, "完成");
-        }
+            AddStep(reporter, $"步骤{i}", 10, "完成", 30);
 
         Debug.Log($"[IlabTestHelper] 已填充 {reporter.Steps.Count} 条测试步骤，可按 W 提交");
+    }
+
+    /// <summary>创建一步，保证 timeUsed 与 endTime-startTime 一致（同帧调用不会出现几毫秒跨度的假象，避免 Java 报 timeUsed 缺失）。</summary>
+    static void AddStep(IlabExpReporter reporter, string title, int score, string eval, int expectTime)
+    {
+        var s = reporter.StartStep(title, "赋分模型", maxScore: 10, expectTime: expectTime);
+        s.FinishStep(score, eval);
+        s.timeUsed = expectTime;                        // 补成与 expectTime 一致
+        s.endTime = s.startTime + expectTime * 1000L;   // 时间跨度 = timeUsed 秒
     }
 
     void SubmitDummy()
