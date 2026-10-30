@@ -45,10 +45,10 @@ public class IlabTestHelper : MonoBehaviour
 
         reporter.ResetExperiment();
 
-        AddStep(reporter, "步骤1：初始化", 8, "良", 60);
-        AddStep(reporter, "步骤2：配置 I/O", 10, "优", 120);
+        AddStep(reporter, "步骤1：初始化", 8, "良", UnityEngine.Random.Range(30, 91));
+        AddStep(reporter, "步骤2：配置 I/O", 10, "优", UnityEngine.Random.Range(60, 181));
         for (int i = 3; i <= 10; i++)
-            AddStep(reporter, $"步骤{i}", 10, "完成", 30);
+            AddStep(reporter, $"步骤{i}", 10, "完成", UnityEngine.Random.Range(20, 121));
 
         Debug.Log($"[IlabTestHelper] 已填充 {reporter.Steps.Count} 条测试步骤，可按 W 提交");
     }
