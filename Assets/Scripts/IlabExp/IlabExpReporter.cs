@@ -44,19 +44,7 @@ public class ExpData
     public int status; // 1=已完成，2=未完成（对齐实验空间 data_upload）
 }
 
-/// <summary>
-/// 实验空间（ilab-x）对接入口：挂在场景中专门的 GameObject 上（切场景不删）。
-/// 记录实验步骤、累计 AI 统计，提交时产出 {"originId":…,"expId":…,"steps":[…],"ai_data":{…},"status":N}，
-/// 并 POST 到 Java 提供的接口（serverUrl + /api/archive/dataUpload，地址见 StreamingAssets/config.json 的 serverUrl）。
-/// 此外支持附件上传接口 /api/archive/attachmentUpload（multipart/form-data）。
-/// <code>
-/// IlabExpReporter.Instance.ResetExperiment();                       // 实验开始
-/// var step = IlabExpReporter.Instance.StartStep("装夹工件", "按操作规范赋分"); // 进入步骤
-/// step.FinishStep(8, "操作规范");                                    // 完成步骤
-/// IlabExpReporter.Instance.Submit(1);                               // 提交（1=已完成，2=未完成）
-/// IlabExpReporter.Instance.UploadAttachment("报告.pdf", "测试报告", "111111233", pdfBytes); // 上传附件
-/// </code>
-/// </summary>
+/// <summary>实验空间（ilab-x）对接入口：挂在场景中专门的 GameObject 上（切场景不删）。</summary>
 public class IlabExpReporter : MonoBehaviour
 {
     public static IlabExpReporter Instance { get; private set; }
@@ -72,9 +60,7 @@ public class IlabExpReporter : MonoBehaviour
     [Tooltip("StreamingAssets 下的配置文件名")]
     [SerializeField] private string configFileName = "config.json";
 
-    /// <summary>
-    /// Java 页面 URL 中 token= 后面的值（WebGL 下 Awake 原样截取，回传时原样放请求头 token，不解码）。
-    /// </summary>
+    /// <summary>Java 页面 URL 中 token= 后面的值（WebGL 下 Awake 原样截取，回传时原样放请求头 token，不解码）。</summary>
     private string _token = "";
     /// <summary>页面 URL 中 expId= 后面的值（原样，放入 JSON body）。</summary>
     private string _expId = "";
@@ -140,9 +126,7 @@ public class IlabExpReporter : MonoBehaviour
     }
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-    /// <summary>
-    /// 取 URL 查询串中 key= 后面的值（原样，不解码；先去掉 #fragment）。
-    /// </summary>
+    /// <summary>取 URL 查询串中 key= 后面的值（原样，不解码；先去掉 #fragment）。</summary>
     static string GetQueryParam(string url, string key)
     {
         int q = url.IndexOf('?');
@@ -160,11 +144,12 @@ public class IlabExpReporter : MonoBehaviour
     }
 #endif
 
-    /// <summary>实验开始：清空步骤与 AI 统计。</summary>
-    public void ResetExperiment()
+    /// <summary>实验开始：清空步骤；resetAi 为 true 时同时重置 AI 统计（默认 true，业务侧实验开始用）；为 false 时仅清步骤，保留 AI 数据（测试辅助 Q 键用）。</summary>
+    public void ResetExperiment(bool resetAi = true)
     {
         steps.Clear();
-        AIUsageTracker.Reset();
+        if (resetAi)
+            AIUsageTracker.Reset();
     }
 
     /// <summary>进入一步（自动打开始时间），返回该步对象，其余字段可直接改。</summary>
@@ -182,18 +167,16 @@ public class IlabExpReporter : MonoBehaviour
         return step;
     }
 
-    /// <summary>
-    /// 组装交给 Java 的 JSON：{"originId":…,"expId":…,"steps":[…],"ai_data":{…},"status":N}。
-    /// </summary>
-    public string GetExpData(int status)
+    /// <summary>组装交给 Java 的 JSON：{"originId":…,"expId":…,"steps":[…],"ai_data":{…},"status":N}。</summary>
+    public string GetExpData(int status, string originId = null, string expId = null)
     {
         for (int i = 0; i < steps.Count; i++)
             steps[i].seq = i + 1;
 
         return JsonUtility.ToJson(new ExpData
         {
-            originId = _originId,
-            expId = _expId,
+            originId = originId ?? _originId,
+            expId = expId ?? _expId,
             steps = steps,
             ai_data = AIUsageTracker.ai_data,
             status = status
@@ -201,7 +184,7 @@ public class IlabExpReporter : MonoBehaviour
     }
 
     /// <summary>提交：按指定状态产出 JSON 并 POST 到 Java data_upload 接口。</summary>
-    public void Submit(int status, Action<bool, string> onDone = null)
+    public void Submit(int status, Action<bool, string> onDone = null, string originId = null, string expId = null)
     {
         if (string.IsNullOrEmpty(serverUrl))
         {
@@ -211,17 +194,15 @@ public class IlabExpReporter : MonoBehaviour
         }
 
         string url = serverUrl + "/api/archive/dataUpload";
-        StartCoroutine(PostJson(url, GetExpData(status), onDone));
+        StartCoroutine(PostJson(url, GetExpData(status, originId, expId), onDone));
     }
 
     /// <summary>用组件上当前 status 提交。</summary>
     public void Submit(Action<bool, string> onDone = null) => Submit(status, onDone);
 
-    /// <summary>
-    /// 上传附件到 Java attachmentUpload 接口（multipart/form-data）。
-    /// originId/expId 取页面 URL 原样值；token 放请求头；fileData 为文件字节流。
-    /// </summary>
-    public void UploadAttachment(string filename, string title, string remarks, byte[] fileData, Action<bool, string> onDone = null)
+    /// <summary>上传附件到 Java attachmentUpload 接口（multipart/form-data）。</summary>
+    public void UploadAttachment(string filename, string title, string remarks, byte[] fileData, Action<bool, string> onDone = null,
+        string originId = null, string expId = null)
     {
         if (string.IsNullOrEmpty(serverUrl))
         {
@@ -238,8 +219,8 @@ public class IlabExpReporter : MonoBehaviour
 
         var form = new List<IMultipartFormSection>
         {
-            new MultipartFormDataSection("originId", _originId),
-            new MultipartFormDataSection("expId", _expId),
+            new MultipartFormDataSection("originId", originId ?? _originId),
+            new MultipartFormDataSection("expId", expId ?? _expId),
             new MultipartFormDataSection("filename", filename),
             new MultipartFormDataSection("title", title),
             new MultipartFormDataSection("remarks", remarks),
@@ -272,9 +253,7 @@ public class IlabExpReporter : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 发送 multipart/form-data 表单（附件上传用），token 原样放请求头。
-    /// </summary>
+    /// <summary>发送 multipart/form-data 表单（附件上传用），token 原样放请求头。</summary>
     IEnumerator PostForm(string url, List<IMultipartFormSection> form, Action<bool, string> onDone)
     {
         using var request = UnityWebRequest.Post(url, form);
