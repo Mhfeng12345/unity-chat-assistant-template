@@ -25,6 +25,12 @@ public class AIClient : MonoBehaviour
     [Tooltip("StreamingAssets 下的配置文件名")]
     [SerializeField] private string configFileName = "AIConfig.json";
 
+    [Header("生命周期")]
+    [Tooltip("切场景不销毁（本对象须为场景根级，AIComponent 实例满足）；聊天记录/AI 状态保留")]
+    public bool keepAcrossScenes = true;
+    [Tooltip("重复实例自动销毁整棵子树（防多场景/多挂载双份 AIClient）")]
+    public bool destroyDuplicates = true;
+
     public string currentExperimentKey;
     private string analyzeUrl;
     private string chatUrl;
@@ -111,7 +117,17 @@ public class AIClient : MonoBehaviour
 
     private void Awake()
     {
+        if (destroyDuplicates && Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         Instance = this;
+
+        if (keepAcrossScenes)
+            DontDestroyOnLoad(gameObject);
+
         StartCoroutine(LoadConfig());
     }
 
