@@ -1,7 +1,9 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Networking;
 
 /// <summary>ilab 上报测试辅助（仅测试用，正式发布前建议移除）。</summary>
 public class IlabTestHelper : MonoBehaviour
@@ -159,7 +161,10 @@ public class IlabTestHelper : MonoBehaviour
         Debug.Log($"[IlabTestHelper] ===== 生成的 JSON（复制到 Apifox）=====\n{json}\n[IlabTestHelper] ===== 结束 =====");
     }
 
-    /// <summary>R 键：读取 StreamingAssets 下的测试 PDF，填充假数据并上传到 attachmentUpload 接口。</summary>
+    /// <summary>
+    /// R 键：下载测试附件字节流并上传到 attachmentUpload（统一走 UnityWebRequest——
+    /// WebGL/Android 下 Application.streamingAssetsPath 是 URL，System.IO 的 File API 不可用）。
+    /// </summary>
     void UploadDummyAttachment()
     {
         var reporter = IlabExpReporter.Instance;
@@ -169,19 +174,31 @@ public class IlabTestHelper : MonoBehaviour
             return;
         }
 
-        string fullPath = Path.Combine(Application.streamingAssetsPath, testAttachmentRelPath);
-        if (!File.Exists(fullPath))
+        string url = Path.Combine(Application.streamingAssetsPath, testAttachmentRelPath).Replace('\\', '/');
+        StartCoroutine(DownloadAttachmentBytes(url, bytes =>
         {
-            Debug.LogError($"[IlabTestHelper] 附件不存在：{fullPath}");
-            return;
+            if (bytes == null || bytes.Length == 0)
+                return;   // 下载失败已在协程里打日志
+
+            ResolveIds(out var originId, out var expId);
+            reporter.UploadAttachment(Path.GetFileName(testAttachmentRelPath), testAttachmentTitle, testAttachmentRemarks, bytes,
+                (ok, msg) => Debug.Log($"[IlabTestHelper] 附件上传{(ok ? "成功" : "失败")}：{msg}"), originId, expId);
+        }));
+    }
+
+    /// <summary>下载附件字节流（File/URL 通用）；失败时打日志并以 null 回调。</summary>
+    IEnumerator DownloadAttachmentBytes(string url, Action<byte[]> onDone)
+    {
+        using var request = UnityWebRequest.Get(url);
+        yield return request.SendWebRequest();
+
+        if (request.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError($"[IlabTestHelper] 附件下载失败：{request.responseCode} {request.error}\n{url}");
+            onDone(null);
+            yield break;
         }
 
-        byte[] bytes = File.ReadAllBytes(fullPath);
-        string filename = Path.GetFileName(fullPath);
-
-        ResolveIds(out var originId, out var expId);
-        reporter.UploadAttachment(filename, testAttachmentTitle, testAttachmentRemarks, bytes,
-            (ok, msg) => Debug.Log($"[IlabTestHelper] 附件上传{(ok ? "成功" : "失败")}：{msg}"),
-            originId, expId);   // WebGL 用页面 URL 值，Editor 用面板测试值
+        onDone(request.downloadHandler.data);
     }
 }
