@@ -72,6 +72,11 @@ public class IlabExpReporter : MonoBehaviour
     /// <summary>只读查看已记录的步骤（注意 seq 只在取数时赋值）。</summary>
     public IReadOnlyList<ExpStep> Steps => steps;
 
+    /// <summary>页面 URL 中的 originId 原样值（非 WebGL 下为空）。</summary>
+    public string OriginId => _originId;
+    /// <summary>页面 URL 中的 expId 原样值（非 WebGL 下为空）。</summary>
+    public string ExpId => _expId;
+
     [Serializable]
     private class IlabConfig
     {

@@ -16,10 +16,10 @@ public class IlabTestHelper : MonoBehaviour
     [Tooltip("R：读取 StreamingAssets/Test 下 PDF，上传到 attachmentUpload 接口（需先按 W 成功）")]
     public KeyCode uploadKey = KeyCode.R;
 
-    [Header("测试数据配置（Editor 下生效）")]
-    [Tooltip("测试用 originId，WebGL 下会优先取页面 URL 中的 originId= 后面的值")]
+    [Header("测试数据配置（仅 Editor/原生下生效）")]
+    [Tooltip("测试用 originId；WebGL 下自动用页面 URL 真实值，此字段不起作用")]
     public string testOriginId = "6b05e279_3c00_4706_a6eb_6added601fded";
-    [Tooltip("测试用 expId，WebGL 下会优先取页面 URL 中的 expId= 后面的值")]
+    [Tooltip("测试用 expId；WebGL 下自动用页面 URL 真实值，此字段不起作用")]
     public string testExpId = "17";
 
     [Header("附件上传测试数据（Editor 下生效）")]
@@ -87,6 +87,22 @@ public class IlabTestHelper : MonoBehaviour
         Debug.Log($"[IlabTestHelper] 已填充 {reporter.Steps.Count} 条测试步骤，可按 W 提交");
     }
 
+    /// <summary>
+    /// originId/expId 分流：WebGL 用页面 URL 真实值（Reporter.Awake 原样截取），
+    /// Editor/原生下页面 URL 为空，用面板 testOriginId/testExpId。
+    /// </summary>
+    void ResolveIds(out string originId, out string expId)
+    {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        var reporter = IlabExpReporter.Instance;
+        originId = reporter != null ? reporter.OriginId : "";
+        expId = reporter != null ? reporter.ExpId : "";
+#else
+        originId = testOriginId;
+        expId = testExpId;
+#endif
+    }
+
     void SubmitDummy()
     {
         var reporter = IlabExpReporter.Instance;
@@ -96,8 +112,9 @@ public class IlabTestHelper : MonoBehaviour
             return;
         }
 
+        ResolveIds(out var originId, out var expId);
         reporter.Submit(1, (ok, msg) => Debug.Log($"[IlabTestHelper] dataUpload{(ok ? "成功" : "失败")}：{msg}"),
-            testOriginId, testExpId);
+            originId, expId);   // WebGL 用页面 URL 值，Editor 用面板测试值
     }
 
     void DumpJson()
@@ -126,10 +143,12 @@ public class IlabTestHelper : MonoBehaviour
 
         var aiData = AIUsageTracker.ai_data;
 
+        ResolveIds(out var originId, out var expId);   // WebGL 导出页面 URL 真实值，Editor 导出测试值
+
         var data = new ExpData
         {
-            originId = testOriginId,
-            expId = testExpId,
+            originId = originId,
+            expId = expId,
             steps = expSteps,
             ai_data = aiData,
             status = 1
@@ -160,8 +179,9 @@ public class IlabTestHelper : MonoBehaviour
         byte[] bytes = File.ReadAllBytes(fullPath);
         string filename = Path.GetFileName(fullPath);
 
+        ResolveIds(out var originId, out var expId);
         reporter.UploadAttachment(filename, testAttachmentTitle, testAttachmentRemarks, bytes,
             (ok, msg) => Debug.Log($"[IlabTestHelper] 附件上传{(ok ? "成功" : "失败")}：{msg}"),
-            testOriginId, testExpId);
+            originId, expId);   // WebGL 用页面 URL 值，Editor 用面板测试值
     }
 }
