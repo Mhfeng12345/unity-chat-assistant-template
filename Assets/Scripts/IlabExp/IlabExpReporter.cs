@@ -22,6 +22,8 @@ public class ExpStep
     public string evaluation = "";
     public string scoringModel = "";
     public string remarks = "";
+    public long pauseStartTime; // 0 表示未在暂停中
+    public long totalPauseTime; // 累计暂停毫秒
 
     /// <summary>结束计时，写入得分与评价。</summary>
     public void FinishStep(int score, string evaluation)
@@ -29,7 +31,22 @@ public class ExpStep
         this.score = score;
         this.evaluation = evaluation;
         endTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        timeUsed = Math.Max(1, (int)((endTime - startTime) / 1000));
+        timeUsed = Math.Max(1, (int)((endTime - startTime - totalPauseTime) / 1000));
+    }
+
+    /// <summary>暂停当前步骤。</summary>
+    public void PauseStep()
+    {
+        if (pauseStartTime != 0) return;
+        pauseStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    }
+
+    /// <summary>恢复当前步骤，累计暂停时长。</summary>
+    public void ResumeStep()
+    {
+        if (pauseStartTime == 0) return;
+        totalPauseTime += DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - pauseStartTime;
+        pauseStartTime = 0;
     }
 }
 
