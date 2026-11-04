@@ -30,8 +30,14 @@ public class ExpStep
     {
         this.score = score;
         this.evaluation = evaluation;
-        endTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        timeUsed = Math.Max(1, (int)((endTime - startTime - totalPauseTime) / 1000));
+        long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        // 暂停中结束 → 只算到暂停那一刻；否则算到当前
+        long activeEnd = (pauseStartTime != 0) ? pauseStartTime : now;
+        long activeMs = activeEnd - startTime - totalPauseTime;
+        if (activeMs < 0) activeMs = 0;
+
+        timeUsed = Math.Max(1, (int)(activeMs / 1000));
+        endTime = startTime + (long)timeUsed * 1000;  // 等效完成时刻，保证契约成立
     }
 
     /// <summary>暂停当前步骤。</summary>
