@@ -32,6 +32,11 @@ public class AIClient : MonoBehaviour
     public bool destroyDuplicates = true;
 
     public string currentExperimentKey;
+
+    [Header("测试模式（false=生产）")]
+    [Tooltip("AIConfig.json 里 isTestMode=true 时开启；JSON 没有该键默认 false（生产安全）。true=IlabTestHelper 测试键可用 + Editor 假 token + 保留面板实验数据；false=全部禁用并第一帧清空面板实验数据")]
+    public bool isTestMode = false;
+
     private string analyzeUrl;
     private string chatUrl;
     private string experimentQAUrl;
@@ -74,6 +79,7 @@ public class AIClient : MonoBehaviour
     {
         public string aiUrl;
         public string currentExperimentKey;
+        public bool isTestMode;
     }
 
     [Serializable]
@@ -172,6 +178,7 @@ public class AIClient : MonoBehaviour
             }
 
             currentExperimentKey = config.currentExperimentKey;
+            isTestMode = config.isTestMode;   // JSON 未提供该键时 JsonUtility 解析为 false（生产安全）
 
             // 去掉末尾多余的 /
             string baseUrl = config.aiUrl.TrimEnd('/');
@@ -180,7 +187,7 @@ public class AIClient : MonoBehaviour
             chatUrl = $"{baseUrl}/chat";
             experimentQAUrl = $"{baseUrl}/knowledgeDBChat";
 
-            Debug.Log($"AIConfig 加载成功\naiUrl: {baseUrl}\nanalyze: {analyzeUrl}\nchat: {chatUrl}\nexperimentQA: {experimentQAUrl}");
+            Debug.Log($"AIConfig 加载成功\naiUrl: {baseUrl}\nanalyze: {analyzeUrl}\nchat: {chatUrl}\nexperimentQA: {experimentQAUrl}\nisTestMode: {isTestMode}");
         }
         catch (Exception e)
         {
