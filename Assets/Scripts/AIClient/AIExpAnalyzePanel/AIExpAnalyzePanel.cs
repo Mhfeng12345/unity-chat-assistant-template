@@ -20,6 +20,11 @@ public class AIExpAnalyzePanel : MonoBehaviour
         sendBtn.onClick.AddListener(OnSendBtnClick);
         statusImage.color = Color.white;
 
+        // 生产模式（AIConfig.json 未开 isTestMode）：第一帧清空 Inspector 配置的实验数据，
+        // 正式数据由业务代码运行时赋值，避免把联调用假数据带回生产
+        if (AIClient.Instance != null && !AIClient.Instance.isTestMode)
+            experimentDataJson = "";
+
         RefreshSendBtn();
     }
 

@@ -17,6 +17,8 @@ public class IlabTestHelper : MonoBehaviour
     public KeyCode dumpKey = KeyCode.E;
     [Tooltip("R：读取 StreamingAssets/Test 下 PDF，上传到 attachmentUpload 接口（需先按 W 成功）")]
     public KeyCode uploadKey = KeyCode.R;
+    [Tooltip("T：回传 AI 分析结果到 Java aiAnalysis/save 接口")]
+    public KeyCode saveAiKey = KeyCode.T;
 
     [Header("测试数据配置（仅 Editor/原生下生效）")]
     [Tooltip("测试用 originId；WebGL 下自动用页面 URL 真实值，此字段不起作用")]
@@ -32,8 +34,32 @@ public class IlabTestHelper : MonoBehaviour
     [Tooltip("附件上传 remarks 假数据")]
     public string testAttachmentRemarks = "ilab 附件上传测试";
 
+    [Header("AI 分析回传测试数据（T 键用）")]
+    [Tooltip("T 键取数来源：默认用场景中 AIExpAnalyzePanel 的 experimentDataJson（测试模式下不清空，是真数据）；留空则自动 FindFirstObjectByType 找")]
+    [SerializeField] AIExpAnalyzePanel aiExpAnalyzePanel;
+    [Tooltip("兜底 body：面板不存在或面板 JSON 为空时才用（纯接口连通性自测）")]
+    [TextArea(3, 10)]
+    public string testAiAnalysisJson = "{\"experiment_data\":{\"experiment_key\":\"测试实验\",\"tasks\":[{\"name\":\"测试任务\",\"steps\":[{\"name\":\"步骤1：选择实验\",\"status\":\"completed\"}]}],\"questions\":[{\"question\":\"测试问题\",\"option\":[\"A、x\",\"B、y\"],\"answer\":\"A\",\"correct_answer\":\"A\"}]}}";
+
+#if UNITY_EDITOR
+    [Header("Editor 测试 token（仅 UNITY_EDITOR 生效）")]
+    [Tooltip("Editor 下无页面 URL 可截 token，用这个伪造值联调 Java 接口；WebGL 用页面 URL 真实值")]
+    public string testToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzkzNDM1NTk4LCJ1c2VySWQiOiI1MTEifQ.wCiQQiyjUN36qM2kKxI1DI3GVIETK0jHg8_6Y4UlTi0";
+#endif
+
+
     void Update()
     {
+        // 测试模式总开关（AIConfig.json isTestMode）：false=生产，本脚本整体禁用（含 Editor token 注入）
+        if (AIClient.Instance == null || !AIClient.Instance.isTestMode)
+            return;
+
+#if UNITY_EDITOR
+        // Editor 测试模式：注入伪造 token，让 W/R/T 的请求真正带 token 头（真实业务 IlabExpReporter 不动）
+        var rep = IlabExpReporter.Instance;
+        if (rep != null && !string.IsNullOrEmpty(testToken))
+            rep.SetTestToken(testToken);
+#endif
         if (Input.GetKeyDown(fillKey))
             FillDummyData();
         if (Input.GetKeyDown(submitKey))
@@ -42,6 +68,8 @@ public class IlabTestHelper : MonoBehaviour
             DumpJson();
         if (Input.GetKeyDown(uploadKey))
             UploadDummyAttachment();
+        if (Input.GetKeyDown(saveAiKey))
+            SaveAiDummy();
     }
 
     /// <summary>唯一假步骤数据源（Q 填数据 / E 导出 JSON 共用，数据保持一致）。</summary>
@@ -200,5 +228,25 @@ public class IlabTestHelper : MonoBehaviour
         }
 
         onDone(request.downloadHandler.data);
+    }
+
+    /// <summary>T 键：回传 AI 分析结果到 Java aiAnalysis/save。默认用 AIExpAnalyzePanel.experimentDataJson（真数据），面板不存在/为空才回落 testAiAnalysisJson 兜底。</summary>
+    void SaveAiDummy()
+    {
+        var reporter = IlabExpReporter.Instance;
+        if (reporter == null)
+        {
+            Debug.LogError("[IlabTestHelper] 未找到 IlabExpReporter.Instance，请先在场景中挂载 IlabExpReporter 组件");
+            return;
+        }
+
+        var panel = aiExpAnalyzePanel != null ? aiExpAnalyzePanel : FindFirstObjectByType<AIExpAnalyzePanel>();
+        string body = (panel != null && !string.IsNullOrEmpty(panel.experimentDataJson))
+            ? panel.experimentDataJson
+            : testAiAnalysisJson;
+        string source = (body == testAiAnalysisJson) ? "testAiAnalysisJson(兜底)" : "AIExpAnalyzePanel.experimentDataJson";
+
+        reporter.SaveAiAnalysis(body,
+            (ok, msg) => Debug.Log($"[IlabTestHelper] aiAnalysis/save（来源：{source}）{(ok ? "成功" : "失败")}：{msg}"));
     }
 }

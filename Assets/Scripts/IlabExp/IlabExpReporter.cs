@@ -31,7 +31,6 @@ public class ExpStep
         this.score = score;
         this.evaluation = evaluation;
         long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        // 暂停中结束 → 只算到暂停那一刻；否则算到当前
         long activeEnd = (pauseStartTime != 0) ? pauseStartTime : now;
         long activeMs = activeEnd - startTime - totalPauseTime;
         if (activeMs < 0) activeMs = 0;
@@ -227,6 +226,31 @@ public class IlabExpReporter : MonoBehaviour
 
     /// <summary>用组件上当前 status 提交。</summary>
     public void Submit(Action<bool, string> onDone = null) => Submit(status, onDone);
+
+    /// <summary>回传 AI 分析结果到 Java aiAnalysis/save 接口：POST {serverUrl}/api/aiAnalysis/save，body 为调用方给的原样 JSON（AI 分析数据），token 头同 dataUpload。</summary>
+    public void SaveAiAnalysis(string experimentDataJson, Action<bool, string> onDone = null)
+    {
+        if (string.IsNullOrEmpty(serverUrl))
+        {
+            Debug.LogError("[IlabExpReporter] serverUrl 未配置，无法回传 AI 分析结果");
+            onDone?.Invoke(false, "serverUrl 未配置");
+            return;
+        }
+        if (string.IsNullOrEmpty(experimentDataJson))
+        {
+            Debug.LogError("[IlabExpReporter] experimentDataJson 为空，无法回传 AI 分析结果");
+            onDone?.Invoke(false, "experimentDataJson 为空");
+            return;
+        }
+
+        string url = serverUrl + "/api/aiAnalysis/save";
+        StartCoroutine(PostJson(url, experimentDataJson, onDone));
+    }
+
+#if UNITY_EDITOR
+    /// <summary>Editor 测试模式注入伪造 token（仅编译进 Editor；打包产物不存在，真实业务不暴露）。</summary>
+    public void SetTestToken(string token) => _token = token;
+#endif
 
     /// <summary>上传附件到 Java attachmentUpload 接口（multipart/form-data）。</summary>
     public void UploadAttachment(string filename, string title, string remarks, byte[] fileData, Action<bool, string> onDone = null,

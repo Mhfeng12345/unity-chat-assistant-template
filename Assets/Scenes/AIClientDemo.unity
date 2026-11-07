@@ -557,6 +557,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7254781907392378682, guid: 9bce59c21748a014eaa00895900e7690,
+        type: 3}
+      propertyPath: allowTesting
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -574,6 +579,154 @@ PrefabInstance:
         type: 3}
       propertyPath: m_SizeDelta.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1280269535178256740, guid: e5fddad9ba2d45d49a257e4da801aa2a,
+        type: 3}
+      propertyPath: experimentDataJson
+      value: "{\r\n    \"experiment_data\": {\r\n        \"experiment_key\": \"\u5DE5\u4E1A\u7535\u5668_\u4EA4\u901A\u706F\u7535\u673A\u6B63\u53CD\u8F6C\u4F20\u9001\u5E26\",\r\n       
+        \"tasks\": [\r\n            {\r\n                \"name\": \"\u56DB\u8282\u4F20\u9001\u5E26\u63A7\u5236\",\r\n               
+        \"steps\": [\r\n                    {\r\n                        \"name\":
+        \"\u6B65\u9AA41\uFF1A\u9009\u62E9\u5B9E\u9A8C\",\r\n                       
+        \"status\": \"completed\"\r\n                    },\r\n                   
+        {\r\n                        \"name\": \"\u6B65\u9AA42\uFF1A\u914D\u7F6EI/O\",\r\n                       
+        \"status\": \"completed\"\r\n                    },\r\n                   
+        {\r\n                        \"name\": \"\u6B65\u9AA43\uFF1A\u8FDE\u63A5PLC\",\r\n                       
+        \"status\": \"completed\"\r\n                    },\r\n                   
+        {\r\n                        \"name\": \"\u6B65\u9AA44\uFF1A\u5F00\u59CB\u7F16\u7A0B\",\r\n                       
+        \"status\": \"completed\"\r\n                    },\r\n                   
+        {\r\n                        \"name\": \"\u6B65\u9AA45\uFF1A\u590D\u4F4D\u5E76\u68C0\u67E5\",\r\n                       
+        \"status\": \"completed\"\r\n                    },\r\n                   
+        {\r\n                        \"name\": \"\u6B65\u9AA46\uFF1A\u542F\u52A8\u8BBE\u5907\",\r\n                       
+        \"status\": \"completed\"\r\n                    },\r\n                   
+        {\r\n                        \"name\": \"\u6B65\u9AA47\uFF1A\u7B2C\u4E00\u6BB5\u8F93\u9001\",\r\n                       
+        \"status\": \"completed\"\r\n                    },\r\n                   
+        {\r\n                        \"name\": \"\u6B65\u9AA48\uFF1A\u7B2C\u4E00\u6B21\u4E2D\u8F6C\",\r\n                       
+        \"status\": \"completed\"\r\n                    },\r\n                   
+        {\r\n                        \"name\": \"\u6B65\u9AA49\uFF1A\u7B2C\u4E8C\u6BB5\u8F93\u9001\",\r\n                       
+        \"status\": \"in_progress\"\r\n                    },\r\n                   
+        {\r\n                        \"name\": \"\u6B65\u9AA410\uFF1A\u7B2C\u4E8C\u6B21\u4E2D\u8F6C\",\r\n                       
+        \"status\": \"not_started\"\r\n                    },\r\n                   
+        {\r\n                        \"name\": \"\u6B65\u9AA411\uFF1A\u7B2C\u4E09\u6BB5\u8F93\u9001\",\r\n                       
+        \"status\": \"not_started\"\r\n                    },\r\n                   
+        {\r\n                        \"name\": \"\u6B65\u9AA412\uFF1A\u7B2C\u4E09\u6B21\u4E2D\u8F6C\",\r\n                       
+        \"status\": \"not_started\"\r\n                    },\r\n                   
+        {\r\n                        \"name\": \"\u6B65\u9AA413\uFF1A\u672B\u6BB5\u5B8C\u6210\u505C\u673A\",\r\n                       
+        \"status\": \"not_started\"\r\n                    },\r\n                   
+        {\r\n                        \"name\": \"\u6B65\u9AA414\uFF1A\u590D\u4F4D\u5E76\u518D\u6B21\u542F\u52A8\",\r\n                       
+        \"status\": \"not_started\"\r\n                    },\r\n                   
+        {\r\n                        \"name\": \"\u6B65\u9AA415\uFF1A\u505C\u6B62\u7F16\u7A0B\",\r\n                       
+        \"status\": \"not_started\"\r\n                    }\r\n                ]\r\n           
+        }\r\n        ],\r\n        \"questions\": [\r\n            {\r\n               
+        \"question\": \"\u4E2D\u8F6C\u8F6C\u5411\u9ED8\u8BA4\u7B49\u5F85\u65F6\u95F4\u4E0E\u5355\u9636\u6BB5\u9ED8\u8BA4\u8D85\u65F6\u5206\u522B\u4E3A\uFF1F\",\r\n               
+        \"option\": [ \"A\u30011.5\u79D2\u548C30\u79D2\", \"B\u30013\u79D2\u548C10\u79D2\",
+        \"C\u300110\u79D2\u548C60\u79D2\", \"D\u30010\u79D2\u548C30\u79D2\" ],\r\n               
+        \"answer\": \"A\",\r\n                \"correct_answer\": \"A\"\r\n           
+        },\r\n            {\r\n                \"question\": \"\u5F53\u524D\u56DB\u8282\u4F20\u9001\u5E26\u7248\u672C\u542F\u52A8\u65F6\uFF0C\u56DB\u53F0\u4E3B\u7535\u673A\u5982\u4F55\u8FD0\u884C\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u53EA\u542F\u52A8\u7B2C\u4E00\u53F0\", \"B\u3001\u9010\u53F0\u5EF6\u65F6\u542F\u52A8\",
+        \"C\u3001\u56DB\u53F0\u540C\u65F6\u8FD0\u884C\", \"D\u3001\u53EA\u542F\u52A8\u7B2C\u56DB\u53F0\"
+        ],\r\n                \"answer\": \"B\",\r\n                \"correct_answer\":
+        \"C\"\r\n            },\r\n            {\r\n                \"question\":
+        \"\u590D\u4F4D\u68C0\u67E5\u6700\u5E94\u786E\u8BA4\u54EA\u9879\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u53EA\u770B\u5168\u90E8\u6062\u590D\u81EA\u52A8\u6309\u94AE\",
+        \"B\u3001\u53EA\u770B\u67D0\u4E00\u8DEF\u5149\u7535True\", \"C\u3001\u6728\u677F\u56DE\u5230\u8D77\u70B9\u3001\u4E09\u4E2A\u4E2D\u8F6C\u53F0\u6062\u590D\u521D\u59CB\u59FF\u6001\u4E14\u8F93\u51FA\u65E0\u5F3A\u5236\u503C\",
+        \"D\u3001\u53EA\u8981\u91CD\u65B0\u8FDE\u63A5\u6210\u529F\" ],\r\n               
+        \"answer\": \"B\",\r\n                \"correct_answer\": \"C\"\r\n           
+        },\r\n            {\r\n                \"question\": \"\u7B2C\u4E00\u6B21\u4E2D\u8F6C\u5B8C\u6210\u5E76\u8FDB\u5165\u7B2C\u4E8C\u6BB5\uFF0C\u5E94\u8BE5\u89C2\u5BDF\u5230\u4EC0\u4E48\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u624B\u52A8\u5C06\u5149\u75352\u7F6ETrue\u5373\u53EF\",
+        \"B\u3001\u6728\u677F\u539F\u5730\u4E0D\u52A8\", \"C\u3001\u53EA\u770B\u5230\u4E3B\u7535\u673A4\u8FD0\u884C\",
+        \"D\u3001\u6728\u677F\u5230\u4F4D\uFF0C\u63A8\u67461\u4E0E\u4E2D\u8F6C\u7535\u673A1\u52A8\u4F5C\uFF0C\u968F\u540E\u5B9E\u9645\u89E6\u53D1\u5149\u75352\"
+        ],\r\n                \"answer\": \"B\",\r\n                \"correct_answer\":
+        \"D\"\r\n            },\r\n            {\r\n                \"question\":
+        \"\u624B\u52A8\u628A\u5149\u7535\u4FE1\u53F7\u8BBE\u4E3ATrue\uFF0C\u80FD\u5355\u72EC\u8BC1\u660E\u6728\u677F\u5DF2\u5B8C\u6210\u8F93\u9001\u5417\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u80FD\uFF0C\u4FE1\u53F7\u4E3ATrue\u5C31\u662F\u5B8C\u6210\",
+        \"B\u3001\u4E0D\u80FD\uFF0C\u8FD8\u9700\u6728\u677F\u4F4D\u7F6E\u3001\u771F\u5B9E\u89E6\u53D1\u5386\u53F2\u4E0E\u6D41\u7A0B\u8BC1\u636E\",
+        \"C\u3001\u53EA\u9700\u8FDE\u63A5\u6210\u529F\u5373\u53EF\u8BA4\u5B9A\",
+        \"D\u3001\u65E0\u9700\u5B9E\u9645\u64CD\u4F5C\u4E0E\u6A21\u578B\u53CD\u9988\"
+        ],\r\n                \"answer\": \"B\",\r\n                \"correct_answer\":
+        \"B\"\r\n            },\r\n            {\r\n                \"question\":
+        \"\u672B\u6BB5\u5B8C\u6210\u540E\uFF0C\u5F53\u524D\u7248\u672C\u63D0\u793A\u4EC0\u4E48\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u8F93\u9001\u5B8C\u6210\uFF0C\u8BF7\u590D\u4F4D\u540E\u91CD\u65B0\u542F\u52A8\",
+        \"B\u3001\u8BF7\u76F4\u63A5\u53CD\u590D\u542F\u52A8\uFF0C\u65E0\u9700\u590D\u4F4D\",
+        \"C\u3001\u81EA\u52A8\u8FDB\u5165\u65E0\u9650\u5FAA\u73AF\uFF0C\u65E0\u9700\u68C0\u67E5\",
+        \"D\u3001\u5FC5\u987B\u5F3A\u5236\u6240\u6709\u8F93\u51FA\" ],\r\n               
+        \"answer\": \"B\",\r\n                \"correct_answer\": \"A\"\r\n           
+        },\r\n            {\r\n                \"question\": \"\u201C\u5168\u90E8\u6062\u590D\u81EA\u52A8\u201D\u7684\u4F5C\u7528\u662F\u4EC0\u4E48\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u628A\u6728\u677F\u9001\u56DE\u8D77\u70B9\", \"B\u3001\u5C06\u4E2D\u8F6C\u53F0\u6062\u590D\u521D\u59CB\u59FF\u6001\",
+        \"C\u3001\u6E05\u7A7A\u6240\u6709\u6B65\u9AA4\u8BB0\u5F55\", \"D\u3001\u89E3\u9664\u8F93\u51FA\u5F3A\u5236\uFF0C\u5C06\u63A7\u5236\u4EA4\u56DE\u7A0B\u5E8F\"
+        ],\r\n                \"answer\": \"B\",\r\n                \"correct_answer\":
+        \"D\"\r\n            },\r\n            {\r\n                \"question\":
+        \"\u8F93\u9001\u5B8C\u6210\u6216\u8D85\u65F6\u540E\uFF0C\u6B63\u786E\u7684\u91CD\u65B0\u8FD0\u884C\u65B9\u5F0F\u662F\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u76F4\u63A5\u518D\u6B21\u542F\u52A8\", \"B\u3001\u4EC5\u70B9\u51FB\u5168\u90E8\u6062\u590D\u81EA\u52A8\",
+        \"C\u3001\u5148\u590D\u4F4D\u6728\u677F\u3001\u4E2D\u8F6C\u53F0\u53CA\u6D41\u7A0B\uFF0C\u518D\u542F\u52A8\",
+        \"D\u3001\u5F3A\u5236\u6240\u6709\u8F93\u51FA\u4E3ATrue\" ],\r\n               
+        \"answer\": \"A\",\r\n                \"correct_answer\": \"C\"\r\n           
+        },\r\n            {\r\n                \"question\": \"\u7B2C\u4E09\u6B21\u4E2D\u8F6C\u5BF9\u5E94\u54EA\u4E24\u4E2A\u5149\u7535\u4FE1\u53F7\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u5149\u75351\u548C\u5149\u75352\", \"B\u3001\u5149\u75352\u548C\u5149\u75353\",
+        \"C\u3001\u5149\u75353\u548C\u5149\u75354\", \"D\u3001\u5149\u75355\u548C\u5149\u75356\"
+        ],\r\n                \"answer\": \"B\",\r\n                \"correct_answer\":
+        \"D\"\r\n            },\r\n            {\r\n                \"question\":
+        \"\u516D\u8DEF\u5149\u7535\u4FE1\u53F7\u9ED8\u8BA4\u4F7F\u7528\u54EA\u4E9B\u5730\u5740\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001Q0.0\u81F3Q0.5\", \"B\u3001M0.0\u81F3M0.5\", \"C\u3001I1.0\u81F3I1.5\",
+        \"D\u3001Q1.0\u81F3Q1.5\" ],\r\n                \"answer\": \"B\",\r\n               
+        \"correct_answer\": \"B\"\r\n            },\r\n            {\r\n               
+        \"question\": \"\u5173\u4E8E\u5168\u90E8\u6062\u590D\u81EA\u52A8\uFF0C\u54EA\u4E9B\u8BF4\u6CD5\u6B63\u786E\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u89E3\u9664\u8F93\u51FA\u5F3A\u5236\", \"B\u3001\u5C06\u63A7\u5236\u4EA4\u56DE\u7A0B\u5E8F\",
+        \"C\u3001\u81EA\u52A8\u628A\u6728\u677F\u9001\u56DE\u8D77\u70B9\", \"D\u3001\u4E0D\u80FD\u66FF\u4EE3\u590D\u4F4D\"
+        ],\r\n                \"answer\": \"A\",\r\n                \"correct_answer\":
+        \"ABD\"\r\n            },\r\n            {\r\n                \"question\":
+        \"\u5F53\u524D\u7248\u672C\u7684\u65F6\u95F4\u53C2\u6570\u5305\u62EC\u54EA\u4E9B\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u4E2D\u8F6C\u8F6C\u5411\u9ED8\u8BA4\u7EA61.5\u79D2\",
+        \"B\u3001\u5355\u9636\u6BB5\u7B49\u5F85\u8D85\u65F6\u9ED8\u8BA430\u79D2\",
+        \"C\u3001\u5168\u90E8\u6062\u590D\u81EA\u52A8\u540E\u56FA\u5B9A\u7B49\u5F8530\u79D2\u5B8C\u6210\u590D\u4F4D\",
+        \"D\u3001\u5E94\u7ED3\u5408\u5B9E\u9645\u7B49\u5F85\u8BB0\u5F55\u5224\u65AD\u8D85\u65F6\"
+        ],\r\n                \"answer\": \"B\",\r\n                \"correct_answer\":
+        \"ABD\"\r\n            },\r\n            {\r\n                \"question\":
+        \"\u672B\u6BB5\u5B8C\u6210\u5E94\u5177\u6709\u54EA\u4E9B\u8BC1\u636E\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u6728\u677F\u5B9E\u9645\u5230\u8FBE\u672B\u7AEF\",
+        \"B\u3001\u8BBE\u5907\u505C\u673A\u5E76\u5173\u95ED\u8F93\u51FA\", \"C\u3001\u663E\u793A\u8F93\u9001\u5B8C\u6210\u5E76\u8981\u6C42\u590D\u4F4D\u7684\u63D0\u793A\",
+        \"D\u3001\u518D\u6B21\u542F\u52A8\u65E0\u9700\u590D\u4F4D\" ],\r\n               
+        \"answer\": \"B\",\r\n                \"correct_answer\": \"ABC\"\r\n           
+        },\r\n            {\r\n                \"question\": \"\u54EA\u4E9B\u60C5\u51B5\u4E0B\u5E94\u5148\u590D\u4F4D\u518D\u542F\u52A8\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u8F93\u9001\u5B8C\u6210\u540E\", \"B\u3001\u5355\u9636\u6BB5\u7B49\u5F85\u8D85\u65F6\u540E\",
+        \"C\u3001\u53EA\u56E0\u4E3A\u67D0\u4E00\u8DEF\u5012\u8BA1\u65F6\u6570\u503C\u6539\u53D8\",
+        \"D\u3001\u6D41\u7A0B\u6545\u969C\u505C\u673A\u540E\" ],\r\n               
+        \"answer\": \"B\",\r\n                \"correct_answer\": \"ABD\"\r\n           
+        },\r\n            {\r\n                \"question\": \"\u5173\u4E8E\u9ED8\u8BA4\u70B9\u4F4D\uFF0C\u54EA\u4E9B\u5BF9\u5E94\u6B63\u786E\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u4E3B\u7535\u673A1\u81F34\u4E3AQ0.0\u81F3Q0.3\",
+        \"B\u3001\u63A8\u67461\u81F33\u4E3AQ0.4\u81F3Q0.6\", \"C\u3001\u4E2D\u8F6C\u7535\u673A1\u81F33\u4E3AQ1.0\u81F3Q1.2\",
+        \"D\u3001\u5149\u75351\u81F36\u4E3AM0.0\u81F3M0.5\" ],\r\n               
+        \"answer\": \"A\",\r\n                \"correct_answer\": \"ABCD\"\r\n           
+        },\r\n            {\r\n                \"question\": \"\u7B2C\u4E8C\u6B21\u4E2D\u8F6C\u4E0E\u8F93\u9001\u5E94\u7ED3\u5408\u54EA\u4E9B\u4FE1\u606F\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u5149\u75353\u7684\u5B9E\u9645\u89E6\u53D1\", \"B\u3001\u4E2D\u8F6C\u53F02\u53CA\u63A8\u67462\u3001\u4E2D\u8F6C\u7535\u673A2\u7684\u52A8\u4F5C\",
+        \"C\u3001\u5149\u75354\u7684\u5B9E\u9645\u89E6\u53D1\u4E0E\u8FDB\u5165\u7B2C\u4E09\u6BB5\",
+        \"D\u3001\u76F4\u63A5\u4F7F\u7528\u7B2C\u4E00\u4E2D\u8F6C\u53F0\u4EE3\u66FF\"
+        ],\r\n                \"answer\": \"A\",\r\n                \"correct_answer\":
+        \"ABC\"\r\n            },\r\n            {\r\n                \"question\":
+        \"\u9A8C\u8BC1\u590D\u4F4D\u540E\u518D\u6B21\u542F\u52A8\u65F6\uFF0C\u5E94\u68C0\u67E5\u54EA\u4E9B\u73B0\u8C61\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u6B64\u524D\u5DF2\u5B8C\u6210\u4E00\u6B21\u5B9E\u9645\u8F93\u9001\",
+        \"B\u3001\u6728\u677F\u4E0E\u4E09\u4E2A\u4E2D\u8F6C\u53F0\u53CA\u6D41\u7A0B\u5DF2\u590D\u4F4D\",
+        \"C\u3001\u518D\u6B21\u542F\u52A8\u540E\u6728\u677F\u80FD\u591F\u91CD\u65B0\u8FD0\u52A8\",
+        \"D\u3001\u53EA\u70B9\u8FC7\u590D\u4F4D\u6309\u94AE\u5C31\u8BA4\u5B9A\u91CD\u65B0\u8F93\u9001\u5B8C\u6210\"
+        ],\r\n                \"answer\": \"A\",\r\n                \"correct_answer\":
+        \"ABC\"\r\n            },\r\n            {\r\n                \"question\":
+        \"\u56DB\u8282\u4F20\u9001\u5E26\u542F\u52A8\u65F6\uFF0C\u54EA\u4E9B\u73B0\u8C61\u7B26\u5408\u5F53\u524D\u7248\u672C\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u56DB\u53F0\u4E3B\u7535\u673A\u540C\u65F6\u8FD0\u884C\",
+        \"B\u3001\u6728\u677F\u4ECE\u7B2C\u4E00\u6BB5\u5F00\u59CB\u524D\u8FDB\",
+        \"C\u3001\u540E\u6BB5\u4E3B\u7535\u673ATrue\u4E0D\u80FD\u5355\u72EC\u5224\u4E3A\u987A\u5E8F\u9519\u8BEF\",
+        \"D\u3001\u4E3B\u7535\u673A\u5FC5\u987B\u4E25\u683C\u9010\u53F0\u5EF6\u65F6\u542F\u52A8\"
+        ],\r\n                \"answer\": \"A\",\r\n                \"correct_answer\":
+        \"ABC\"\r\n            },\r\n            {\r\n                \"question\":
+        \"\u590D\u4F4D\u65F6\u5E94\u6838\u5BF9\u54EA\u4E9B\u9879\u76EE\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u6728\u677F\u56DE\u5230\u8D77\u70B9\", \"B\u3001\u4E09\u4E2A\u4E2D\u8F6C\u53F0\u6062\u590D\u521D\u59CB\u4F4D\u7F6E\",
+        \"C\u3001\u6D41\u7A0B\u6062\u590D\u521D\u59CB\u72B6\u6001\", \"D\u3001\u8F93\u51FA\u65E0\u5F3A\u5236\u503C\"
+        ],\r\n                \"answer\": \"A\",\r\n                \"correct_answer\":
+        \"ABCD\"\r\n            },\r\n            {\r\n                \"question\":
+        \"\u7B2C\u4E00\u6B21\u4E2D\u8F6C\u5B8C\u6210\u7684\u8BC1\u636E\u5E94\u5305\u62EC\u54EA\u4E9B\uFF1F\",\r\n               
+        \"option\": [ \"A\u3001\u6728\u677F\u5B9E\u9645\u5230\u4F4D\", \"B\u3001\u63A8\u67461\u4E0E\u4E2D\u8F6C\u7535\u673A1\u52A8\u4F5C\",
+        \"C\u3001\u968F\u540E\u5B9E\u9645\u89E6\u53D1\u5149\u75352\u5E76\u8FDB\u5165\u7B2C\u4E8C\u6BB5\",
+        \"D\u3001\u53EA\u624B\u52A8\u5C06\u5149\u75352\u6539\u6210True\" ],\r\n               
+        \"answer\": \"B\",\r\n                \"correct_answer\": \"ABC\"\r\n           
+        }\r\n        ]\r\n    }\r\n}"
       objectReference: {fileID: 0}
     - target: {fileID: 1379872863868287865, guid: e5fddad9ba2d45d49a257e4da801aa2a,
         type: 3}
