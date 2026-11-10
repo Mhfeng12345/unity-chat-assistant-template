@@ -9,7 +9,8 @@ public class AIMsgPanel : MonoBehaviour
 {
     [SerializeField] TextMeshProUGUI contentText;
 
-    /// <summary>发起槽式快照分析。json 为 V2 中文协议（数据版本/实验模块/采集信息/当前状态/与上次点击相比/辅助计算）。</summary>
+    [TextArea(5,10)][SerializeField] string textJson;
+    /// <summary>槽式快照分析</summary>
     public void SendSlotTypeAnalyze(string json)
     {
         string error = AIClient.Instance.SendSlotTypeAnalyze(
@@ -32,6 +33,13 @@ public class AIMsgPanel : MonoBehaviour
             contentText.text = $"请求失败：{error}";
             LayoutRebuilder.ForceRebuildLayoutImmediate(contentText.transform.parent as RectTransform);
         }
+    }
+
+
+    [ContextMenu("test")]
+    public void EditorTest()
+    {
+        SendSlotTypeAnalyze(textJson);
     }
 }
 
