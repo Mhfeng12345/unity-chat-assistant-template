@@ -40,6 +40,7 @@ public class AIClient : MonoBehaviour
     private string analyzeUrl;
     private string chatUrl;
     private string experimentQAUrl;
+    private string slotTypeAnalyzeUrl;
 
     /// <summary>当前是否有请求正在进行</summary>
     public bool IsBusy { get; private set; }
@@ -186,8 +187,9 @@ public class AIClient : MonoBehaviour
             analyzeUrl = $"{baseUrl}/analyze";
             chatUrl = $"{baseUrl}/chat";
             experimentQAUrl = $"{baseUrl}/knowledgeDBChat";
+            slotTypeAnalyzeUrl = $"{baseUrl}/analyse/WSTES_SlotType";
 
-            Debug.Log($"AIConfig 加载成功\naiUrl: {baseUrl}\nanalyze: {analyzeUrl}\nchat: {chatUrl}\nexperimentQA: {experimentQAUrl}\nisTestMode: {isTestMode}");
+            Debug.Log($"AIConfig 加载成功\naiUrl: {baseUrl}\nanalyze: {analyzeUrl}\nchat: {chatUrl}\nexperimentQA: {experimentQAUrl}\nslotType: {slotTypeAnalyzeUrl}\nisTestMode: {isTestMode}");
         }
         catch (Exception e)
         {
@@ -209,6 +211,21 @@ public class AIClient : MonoBehaviour
             return Fail("analyzeUrl 未配置，请检查 StreamingAssets/AIConfig.json");
 
         Enqueue(() => StartCoroutine(SendRequest(analyzeUrl, json, chunkCallback, completeCallback, onStart)), owner);
+        return null;
+    }
+
+    /// <summary>
+    /// 槽式快照分析（/analyse/WSTES_SlotType）：直接传入 V2 中文协议 JSON，流式渲染
+    /// </summary>
+    public string SendSlotTypeAnalyze(string json, Action<string> chunkCallback, Action completeCallback = null, Action onStart = null, object owner = null)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return Fail("快照数据为空");
+
+        if (string.IsNullOrEmpty(slotTypeAnalyzeUrl))
+            return Fail("slotTypeAnalyzeUrl 未配置，请检查 StreamingAssets/AIConfig.json");
+
+        Enqueue(() => StartCoroutine(SendRequest(slotTypeAnalyzeUrl, json, chunkCallback, completeCallback, onStart)), owner);
         return null;
     }
 
