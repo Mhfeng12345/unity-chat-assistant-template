@@ -1,9 +1,11 @@
 mergeInto(LibraryManager.library, {
-  AIClientStreamBegin: function (goPtr, urlPtr, jsonPtr) {
+  AIClientStreamBegin: function (goPtr, urlPtr, jsonPtr, tokenPtr) {
     var s = (Module.AIClientStreamState = { go: UTF8ToString(goPtr), len: 0, xhr: null });
     var xhr = new XMLHttpRequest();
     xhr.open("POST", UTF8ToString(urlPtr), true);
     xhr.setRequestHeader("Content-Type", "application/json");
+    var token = UTF8ToString(tokenPtr);
+    if (token) xhr.setRequestHeader("Authorization", "Bearer " + token);
     xhr.onreadystatechange = function () {
       if (xhr.readyState === 3 || xhr.readyState === 4) {
         var text = xhr.responseText.substring(s.len);

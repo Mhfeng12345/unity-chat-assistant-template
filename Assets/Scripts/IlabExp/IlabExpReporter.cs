@@ -124,6 +124,9 @@ public class IlabExpReporter : MonoBehaviour
             Debug.Log($"[IlabExpReporter] token={_token} expId={_expId} originId={_originId}");
 #endif
 
+        // 页面 URL 的 JWT 同步给 AIClient：后端 AUTH_ENABLED=true 时 AI 请求自动带 Authorization: Bearer（非 WebGL 为空=清除）
+        AIClient.AuthToken = _token;
+
         StartCoroutine(LoadConfig());
     }
 
@@ -249,7 +252,11 @@ public class IlabExpReporter : MonoBehaviour
 
 #if UNITY_EDITOR
     /// <summary>Editor 测试模式注入伪造 token（仅编译进 Editor；打包产物不存在，真实业务不暴露）。</summary>
-    public void SetTestToken(string token) => _token = token;
+    public void SetTestToken(string token)
+    {
+        _token = token;
+        AIClient.AuthToken = token;   // 同步给 AIClient：JWT 鉴权联调时 AI 请求也带 token
+    }
 #endif
 
     /// <summary>上传附件到 Java attachmentUpload 接口（multipart/form-data）。</summary>

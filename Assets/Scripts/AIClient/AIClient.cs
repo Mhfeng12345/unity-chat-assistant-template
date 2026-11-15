@@ -15,7 +15,7 @@ public class AIClient : MonoBehaviour
     // 浏览器环境：走 JS XHR 增量读取（UnityWebRequest 在 WebGL 构建会被浏览器整体缓冲，无法流式）
     // 全限定名：即使 IDE 清理 using 也不会丢（__Internal 绑定只看方法名）
     [System.Runtime.InteropServices.DllImport("__Internal")]
-    private static extern void AIClientStreamBegin(string gameObjectName, string url, string jsonBody);
+    private static extern void AIClientStreamBegin(string gameObjectName, string url, string jsonBody, string authToken);
 
     [System.Runtime.InteropServices.DllImport("__Internal")]
     private static extern void AIClientStreamAbort();
@@ -41,6 +41,13 @@ public class AIClient : MonoBehaviour
     private string chatUrl;
     private string experimentQAUrl;
     private string slotTypeAnalyzeUrl;
+
+    // ---------- JWT 鉴权 ----------
+    /// <summary>后端是否启用 JWT 鉴权（LoadConfig 后探测 /health 得出；探测失败按 false 兜底）</summary>
+    public static bool AuthEnabled { get; private set; }
+
+    /// <summary>JWT token（Java 平台签发：WebGL 由 IlabExpReporter 从页面 URL 注入，Editor 联调由 IlabTestHelper 注入）；null/空=未注入，请求不带 Bearer</summary>
+    public static string AuthToken { get; private set; }
 
     /// <summary>当前是否有请求正在进行</summary>
     public bool IsBusy { get; private set; }
@@ -81,6 +88,13 @@ public class AIClient : MonoBehaviour
         public string aiUrl;
         public string currentExperimentKey;
         public bool isTestMode;
+    }
+
+    [Serializable]
+    private class HealthResponse
+    {
+        public string status;
+        public bool auth_enabled;
     }
 
     [Serializable]
@@ -189,12 +203,40 @@ public class AIClient : MonoBehaviour
             experimentQAUrl = $"{baseUrl}/knowledgeDBChat";
             slotTypeAnalyzeUrl = $"{baseUrl}/analyse/WSTES_SlotType";
 
+            StartCoroutine(ProbeAuth(baseUrl));
+
             Debug.Log($"AIConfig 加载成功\naiUrl: {baseUrl}\nanalyze: {analyzeUrl}\nchat: {chatUrl}\nexperimentQA: {experimentQAUrl}\nslotType: {slotTypeAnalyzeUrl}\nisTestMode: {isTestMode}");
         }
         catch (Exception e)
         {
             Debug.LogError($"解析 AIConfig 失败: {e.Message}");
         }
+    }
+
+    /// <summary>探测 /health 的 auth_enabled（每次启动探测一次，不持久缓存；失败按 false 兜底）</summary>
+    private IEnumerator ProbeAuth(string baseUrl)
+    {
+        using var request = UnityWebRequest.Get($"{baseUrl}/health");
+        request.timeout = 5;
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            try
+            {
+                var health = JsonUtility.FromJson<HealthResponse>(request.downloadHandler.text);
+                AuthEnabled = health != null && health.auth_enabled;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[Auth] 解析 /health 失败，按未鉴权处理: {e.Message}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[Auth] 探测 /health 失败，按未鉴权处理: {request.error}");
+        }
+        Debug.Log($"[Auth] 后端 JWT 鉴权: {(AuthEnabled ? "开启" : "关闭")}，token: {(string.IsNullOrEmpty(AuthToken) ? "未注入" : "已注入")}");
     }
 
     #region 对外接口
@@ -343,7 +385,7 @@ public class AIClient : MonoBehaviour
 
 #if UNITY_WEBGL && !UNITY_EDITOR
         // 浏览器：JS XHR 增量读取，数据通过 OnStreamChunk 推回共享管道
-        AIClientStreamBegin(gameObject.name, url, jsonBody);
+        AIClientStreamBegin(gameObject.name, url, jsonBody, AuthToken ?? "");
         while (!streamCompleted && !stopped)
         {
             yield return null;
@@ -356,13 +398,17 @@ public class AIClient : MonoBehaviour
         else if (streamError != null)
         {
             Debug.LogError($"请求失败：{streamError}\n{rawBody}");
-            onChunk?.Invoke($"\n\n**请求失败**：{streamError}");
+            onChunk?.Invoke(streamError.StartsWith("401")
+                ? "\n\n**登录状态失效**：请重新进入实验后再试（HTTP 401）"
+                : $"\n\n**请求失败**：{streamError}");
         }
 #else
         using var request = new UnityWebRequest(url, "POST");
         request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonBody));
         request.downloadHandler = new StreamHandler(chunks);
         request.SetRequestHeader("Content-Type", "application/json");
+        if (!string.IsNullOrEmpty(AuthToken))
+            request.SetRequestHeader("Authorization", "Bearer " + AuthToken);
         request.timeout = 300;
         activeRequest = request;
 
@@ -390,9 +436,17 @@ public class AIClient : MonoBehaviour
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                string message = BuildErrorMessage(request);
-                Debug.LogError($"请求失败：{request.responseCode} {request.error}\n{rawBody}");
-                onChunk?.Invoke($"\n\n**请求失败**：{message}");
+                if (request.responseCode == 401)
+                {
+                    Debug.LogError("请求被拒：JWT 鉴权失败（401），token 缺失/无效/过期");
+                    onChunk?.Invoke("\n\n**登录状态失效**：请重新进入实验后再试（HTTP 401）");
+                }
+                else
+                {
+                    string message = BuildErrorMessage(request);
+                    Debug.LogError($"请求失败：{request.responseCode} {request.error}\n{rawBody}");
+                    onChunk?.Invoke($"\n\n**请求失败**：{message}");
+                }
             }
         }
 #endif
