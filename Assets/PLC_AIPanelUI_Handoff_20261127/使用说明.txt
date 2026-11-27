@@ -7,7 +7,7 @@
 入口
 1. 双击 unitypackage 导入，资源位于 Assets/PLC_AIPanelUI_Handoff_20261127。
 2. 打开 Preview/AI面板_预览.unity 查看完整 UI；进入播放模式可查看人物视频、入口表情、面板打开关闭和模式切换。
-3. 完整 Canvas 预制体：Prefabs/PLC_AIPanelUI_Complete.prefab。放入空场景后，场景需有一个 EventSystem。
+3. 完整 Canvas 预制体：Prefabs/AIComponentCanvas_greenUI.prefab。放入空场景后，场景需有一个 EventSystem。
 4. 已有 Canvas 时，可使用 Prefabs/AIComponent/AIComponent.prefab。
 5. 单独编辑面板：Prefabs/AIComponent/AITemplate.prefab；入口：OpenAIPanelButton.prefab；问答气泡在 AIKnowledgeDBChatChatPanel 子目录，Preview/问答气泡_样例.prefab 提供示例。
 

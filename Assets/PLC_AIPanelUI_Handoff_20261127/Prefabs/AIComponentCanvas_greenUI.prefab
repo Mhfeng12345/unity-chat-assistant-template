@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 6748833956840575552}
   - component: {fileID: 1264108485239497271}
   m_Layer: 0
-  m_Name: PLC_AIPanelUI_Complete
+  m_Name: AIComponentCanvas_greenUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

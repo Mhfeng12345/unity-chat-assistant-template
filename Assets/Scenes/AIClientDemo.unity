@@ -505,7 +505,7 @@ PrefabInstance:
     - target: {fileID: 614198831300426297, guid: a2a48001ca3923e48a8b2399fb6c6b8e,
         type: 3}
       propertyPath: m_Name
-      value: PLC_AIPanelUI_Complete
+      value: AIComponentCanvas_greenUI
       objectReference: {fileID: 0}
     - target: {fileID: 1978687702007150430, guid: a2a48001ca3923e48a8b2399fb6c6b8e,
         type: 3}
