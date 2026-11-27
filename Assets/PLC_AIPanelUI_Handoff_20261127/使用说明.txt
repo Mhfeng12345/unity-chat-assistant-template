@@ -1,0 +1,24 @@
+﻿PLC AI 面板：独立 UI 与视频交付包
+制作日期：2026-11-27；验证环境：Unity 2021.3.7f1。
+
+导入前提
+项目需要 Unity UI（uGUI）和 TextMeshPro（3.0.6 或兼容版本）。如未导入过 TMP 基础资源，请先执行 Window > TextMeshPro > Import TMP Essential Resources。
+
+入口
+1. 双击 unitypackage 导入，资源位于 Assets/PLC_AIPanelUI_Handoff_20261127。
+2. 打开 Preview/AI面板_预览.unity 查看完整 UI；进入播放模式可查看人物视频、入口表情、面板打开关闭和模式切换。
+3. 完整 Canvas 预制体：Prefabs/PLC_AIPanelUI_Complete.prefab。放入空场景后，场景需有一个 EventSystem。
+4. 已有 Canvas 时，可使用 Prefabs/AIComponent/AIComponent.prefab。
+5. 单独编辑面板：Prefabs/AIComponent/AITemplate.prefab；入口：OpenAIPanelButton.prefab；问答气泡在 AIKnowledgeDBChatChatPanel 子目录，Preview/问答气泡_样例.prefab 提供示例。
+
+交付范围
+包含聊天界面、实验分析界面、输入框、按钮、下拉菜单、空状态、问答气泡、图片、字体、视频、播放脚本及透明遮罩材质。
+大机器人的 RectTransform 尺寸为 300 × 300。
+视频共 7 个：入口微笑/说话各 1 个，人物随机播放视频 5 个。视频目录为 Assets/StreamingAssets/PLC_AIPanelUI_Handoff_20261127，请保留该路径。
+仅保留 UI 展示交互和视频播放；未包含 AI 服务、请求、鉴权配置、API 密钥、实验数据处理、AI 问答和分析逻辑。发送、清除与开始分析按钮用于改 UI，无业务操作。
+
+与现有 AI 组件分离
+所有交付资源均重新分配 GUID，使用独立资源目录；脚本命名空间为 PLC_AIPanelUI_Handoff_20261127；StreamingAssets 子目录及自定义视频 Shader 名称独立。
+未打包原项目全局 TMP Settings、ProjectSettings 或 Packages 配置，避免导入时改写项目设置。
+直接导入不会覆盖原 AI 组件。不要将此包中的文件移动覆盖到原组件路径。
+各自修改后可再次导出此独立目录及其专属 StreamingAssets 目录。后续合回业务组件时，请对照内部节点名称迁移 UI 样式；本包不直接替换已有逻辑绑定。
